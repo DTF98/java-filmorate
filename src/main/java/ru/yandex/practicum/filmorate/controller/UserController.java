@@ -1,61 +1,84 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.storage.UserStorage;
+import ru.yandex.practicum.filmorate.service.UserService;
+import ru.yandex.practicum.filmorate.storage.InMemoryUserStorage;
 
 import java.time.LocalDate;
 import java.util.List;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @RestController
 @Slf4j
 public class UserController {
     private int id = 1;
-    private final UserStorage storage = new UserStorage();
+
+    private final UserService service;
+
+    @Autowired
+    public UserController(InMemoryUserStorage storage) {
+        this.service = new UserService(storage);
+    }
 
     @GetMapping("/users")
     public List<User> findAll() {
-        return storage.getUsers();
+        return service.getUsers();
+    }
+
+    @GetMapping("/users/{id}/friends")
+    public ResponseEntity<?> getFriends(@PathVariable("id") Integer id) {
+        return new ResponseEntity<>(service.getUserById(id).getFriends()
+                .stream().
+                map(service::getUserById).
+                collect(Collectors.toList()), HttpStatus.OK);
+    }
+
+    @GetMapping("/users/{id}/friends/common/{otherId}")
+    public ResponseEntity<?> getListOfMutualFriends(@PathVariable("id") Integer id,
+                                                    @PathVariable("otherId") Integer otherId) {
+        return new ResponseEntity<>(service.searchForCommonFriends(id, otherId).stream().
+                map(service::getUserById).
+                collect(Collectors.toList()),
+                HttpStatus.OK);
+    }
+
+    @DeleteMapping("/users/{id}/friends/{friendId}")
+    public HttpStatus deleteFriend(@PathVariable("id") Integer id,
+                                 @PathVariable("friendId") Integer friendId) {
+        service.removeFriend(id, friendId);
+        return HttpStatus.OK;
     }
 
     @PostMapping(value = "/users")
     public ResponseEntity<?> create(@RequestBody User user) {
-        try {
-            User userCheck = ckeckingUser(user);
-            storage.setUser(userCheck);
-            log.info("Добавлен пользователь: {}", storage.getUserById(userCheck.getId()));
-            return new ResponseEntity<>(userCheck, HttpStatus.OK);
-        } catch (ValidationException e) {
-            log.debug(e.getMessage());
-            return new ResponseEntity<>(user, HttpStatus.BAD_REQUEST);
-        }
+        User userCheck = ckeckingUser(user);
+        service.setUser(userCheck);
+        return new ResponseEntity<>(userCheck, HttpStatus.OK);
     }
 
     @PutMapping(value = "/users")
     public ResponseEntity<?> updateOrCreateNew(@RequestBody User user) {
         if (user.getId() != null) {
-            try {
-                User userCheck = ckeckingUser(user);
-                if (storage.containsUser(userCheck.getId())) {
-                    storage.setUser(userCheck);
-                    log.info("Обновлён пользователь: {}", storage.getUserById(userCheck.getId()));
-                    return new ResponseEntity<>(userCheck, HttpStatus.OK);
-                } else {
-                    log.info("User по такому ID не существует");
-                    return new ResponseEntity<>(userCheck, HttpStatus.NOT_FOUND);
-                }
-            } catch (ValidationException e) {
-                log.error(e.getMessage());
-                return new ResponseEntity<>(user, HttpStatus.BAD_REQUEST);
-            }
+            User userCheck = ckeckingUser(user);
+            service.updateUser(userCheck);
+            return new ResponseEntity<>(userCheck, HttpStatus.OK);
         } else {
             return create(user);
         }
+    }
+
+    @PutMapping("/users/{id}/friends/{friendId}")
+    public ResponseEntity<?> addFriend(@PathVariable("id") Integer id,
+                                       @PathVariable("friendId") Integer friendId) {
+        service.addToFriends(id, friendId);
+        return new ResponseEntity<>(service.getUserById(id), HttpStatus.OK);
     }
 
     private User ckeckingUser(User user) {

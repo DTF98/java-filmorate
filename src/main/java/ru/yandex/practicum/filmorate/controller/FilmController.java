@@ -1,12 +1,14 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.storage.FilmStorage;
+import ru.yandex.practicum.filmorate.service.FilmService;
+import ru.yandex.practicum.filmorate.storage.InMemoryFilmStorage;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -17,43 +19,48 @@ public class FilmController {
     private int id = 1;
     private final LocalDate movieBirthday = LocalDate.of(1895,12,28);
     private final int maximumDescriptionLength = 200;
-    private final FilmStorage storage = new FilmStorage();
+    private final FilmService service;
+
+    @Autowired
+    public FilmController(InMemoryFilmStorage storage) {
+        this.service = new FilmService(storage);
+    }
 
     @GetMapping("/films")
     public List<Film> findAll() {
-        return storage.getFilms();
+        return service.getFilms();
+    }
+
+    @GetMapping("/films/popular")
+    public ResponseEntity<?> getTopFilms(@RequestParam(defaultValue = "10", required = false) Integer count) {
+        return new ResponseEntity<>(service.search10MostPopularFilms(count), HttpStatus.OK);
+    }
+
+    @DeleteMapping("/films/{id}/like/{userId}")
+    public HttpStatus deleteLike(@PathVariable("id") Integer id, @PathVariable("userId") Integer userId) {
+        service.removeLike(userId, id);
+        return HttpStatus.OK;
     }
 
     @PostMapping(value = "/films")
     public ResponseEntity<?> create(@RequestBody Film film) {
-        try {
-            Film filmCheck = chekingFilm(film);
-            storage.setFilm(filmCheck);
-            log.info("Добавлен фильм: {}", storage.getFilmById(filmCheck.getId()));
-            return new ResponseEntity<>(filmCheck, HttpStatus.OK);
-        } catch (ValidationException e) {
-            log.error(e.getMessage());
-            return new ResponseEntity<>(film, HttpStatus.BAD_REQUEST);
-        }
+        Film filmCheck = chekingFilm(film);
+        service.setFilm(filmCheck);
+        return new ResponseEntity<>(filmCheck, HttpStatus.OK);
+    }
+
+    @PutMapping("/films/{id}/like/{userId}")
+    public ResponseEntity<?> addLike(@PathVariable("id") Integer id, @PathVariable("userId") Integer userId) {
+        service.addLike(userId, id);
+        return new ResponseEntity<>(service.getFilmById(id), HttpStatus.OK);
     }
 
     @PutMapping(value = "/films")
     public ResponseEntity<?> updateOrCreateNew(@RequestBody Film film) {
         if (film.getId() != null) {
-            try {
-                Film filmCheck = chekingFilm(film);
-                if (storage.containsFilm(filmCheck.getId())) {
-                    storage.setFilm(filmCheck);
-                    log.info("Обновлен фильм: {}", storage.getFilmById(filmCheck.getId()));
-                    return new ResponseEntity<>(filmCheck, HttpStatus.OK);
-                } else {
-                    log.info("Film по такому ID не существует");
-                    return new ResponseEntity<>(film, HttpStatus.NOT_FOUND);
-                }
-            } catch (ValidationException e) {
-                log.error(e.getMessage());
-                return new ResponseEntity<>(film, HttpStatus.BAD_REQUEST);
-            }
+            Film filmCheck = chekingFilm(film);
+            service.updateFilm(filmCheck);
+            return new ResponseEntity<>(filmCheck, HttpStatus.OK);
         } else {
             return create(film);
         }
