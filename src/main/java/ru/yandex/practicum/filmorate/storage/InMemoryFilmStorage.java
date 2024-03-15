@@ -10,13 +10,11 @@ import java.util.List;
 
 @Component
 @NoArgsConstructor
-public class InMemoryFilmStorage implements FilmStorage{
+public class InMemoryFilmStorage implements FilmStorage {
     private final HashMap<Integer, Film> films = new HashMap<>();
 
     public List<Film> getFilms() {
-        List<Film> films1 = new ArrayList<>();
-        films.forEach((k,v) -> films1.add(v));
-        return films1;
+        return new ArrayList<>(films.values());
     }
 
     public void setFilm(Film film) {

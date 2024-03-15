@@ -7,9 +7,9 @@ import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
+import ru.yandex.practicum.filmorate.utils.FilmComparator;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -34,7 +34,7 @@ public class FilmService {
     }
 
     public void removeLike(Integer userID, Integer filmID) {
-        if(inMemoryFilmStorage.containsFilm(filmID)){
+        if (inMemoryFilmStorage.containsFilm(filmID)) {
             if (inMemoryFilmStorage.getFilmById(filmID).getLikes().contains(userID)) {
                 log.info(String.format("Удалён лайк пользователя id = %s у фильма id = %s", userID, filmID));
                 inMemoryFilmStorage.getFilmById(filmID).removeLike(userID);
@@ -67,7 +67,7 @@ public class FilmService {
     }
 
     public void updateFilm(Film film) {
-        if(inMemoryFilmStorage.containsFilm(film.getId())) {
+        if (inMemoryFilmStorage.containsFilm(film.getId())) {
             inMemoryFilmStorage.setFilm(film);
             log.info("Обновлен фильм: {}", inMemoryFilmStorage.getFilmById(film.getId()));
         } else {
@@ -76,7 +76,7 @@ public class FilmService {
     }
 
     public Film getFilmById(Integer id) {
-        if(inMemoryFilmStorage.containsFilm(id)) {
+        if (inMemoryFilmStorage.containsFilm(id)) {
             log.info(String.format("Получен фильм по id = %s : %s", id, inMemoryFilmStorage.getFilmById(id)));
             return inMemoryFilmStorage.getFilmById(id);
         } else {
@@ -85,9 +85,3 @@ public class FilmService {
     }
 }
 
-class FilmComparator implements Comparator<Film> {
-
-    public int compare(Film a, Film b){
-        return -(Integer.compare(a.getLikes().size(), b.getLikes().size()));
-    }
-}

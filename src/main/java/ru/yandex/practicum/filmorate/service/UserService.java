@@ -24,8 +24,7 @@ public class UserService {
     }
 
     public void addToFriends(Integer id1, Integer id2) throws ValidationException {
-        if (inMemoryUserStorage.containsUser(id1)
-                 && inMemoryUserStorage.containsUser(id2)) {
+        if (inMemoryUserStorage.containsUser(id1) && inMemoryUserStorage.containsUser(id2)) {
             inMemoryUserStorage.getUserById(id1).setFriend(id2);
             inMemoryUserStorage.getUserById(id2).setFriend(id1);
             log.info(String.format("Создана дружба у пользователей %s и %s", id1, id2));
@@ -72,15 +71,16 @@ public class UserService {
     }
 
     public void updateUser(User user) {
-        if(inMemoryUserStorage.containsUser(user.getId())) {
+        if (inMemoryUserStorage.containsUser(user.getId())) {
             inMemoryUserStorage.setUser(user);
             log.info(String.format("Обновлён пользователь: {%s}", inMemoryUserStorage.getUserById(user.getId())));
         } else {
             throw new NotFoundException(String.format("Пользователь не найден!"));
         }
     }
+
     public User getUserById(Integer id) {
-        if(inMemoryUserStorage.containsUser(id)) {
+        if (inMemoryUserStorage.containsUser(id)) {
             log.info(String.format("Получен список друзей : %s", inMemoryUserStorage.getUserById(id).getFriends()));
             return inMemoryUserStorage.getUserById(id);
         } else {

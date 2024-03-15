@@ -35,17 +35,17 @@ public class UserController {
     @GetMapping("/users/{id}/friends")
     public ResponseEntity<?> getFriends(@PathVariable("id") Integer id) {
         return new ResponseEntity<>(service.getUserById(id).getFriends()
-                .stream().
-                map(service::getUserById).
-                collect(Collectors.toList()), HttpStatus.OK);
+                .stream()
+                .map(service::getUserById)
+                .collect(Collectors.toList()), HttpStatus.OK);
     }
 
     @GetMapping("/users/{id}/friends/common/{otherId}")
     public ResponseEntity<?> getListOfMutualFriends(@PathVariable("id") Integer id,
                                                     @PathVariable("otherId") Integer otherId) {
-        return new ResponseEntity<>(service.searchForCommonFriends(id, otherId).stream().
-                map(service::getUserById).
-                collect(Collectors.toList()),
+        return new ResponseEntity<>(service.searchForCommonFriends(id, otherId).stream()
+                .map(service::getUserById)
+                .collect(Collectors.toList()),
                 HttpStatus.OK);
     }
 
