@@ -16,28 +16,28 @@ import java.util.stream.Collectors;
 @Service
 @Slf4j
 public class FilmService {
-    private  final FilmStorage inMemoryFilmStorage;
+    private  final FilmStorage storage;
 
     @Autowired
-    public FilmService(FilmStorage inMemoryFilmStorage) {
-        this.inMemoryFilmStorage = inMemoryFilmStorage;
+    public FilmService(FilmStorage storage) {
+        this.storage = storage;
     }
 
     public void addLike(Integer userID, Integer filmID) {
-        if (inMemoryFilmStorage.containsFilm(filmID)) {
-            inMemoryFilmStorage.getFilmById(filmID).setLike(userID);
+        if (storage.containsFilm(filmID)) {
+            storage.getFilmById(filmID).setLike(userID);
             log.info(String.format("Добавлен лайк фильму: %s пользователем id = %s",
-                    inMemoryFilmStorage.getFilmById(filmID), userID));
+                    storage.getFilmById(filmID), userID));
         } else {
             throw new NotFoundException(String.format("Фильм по id = %s не найден!", filmID));
         }
     }
 
     public void removeLike(Integer userID, Integer filmID) {
-        if (inMemoryFilmStorage.containsFilm(filmID)) {
-            if (inMemoryFilmStorage.getFilmById(filmID).getLikes().contains(userID)) {
+        if (storage.containsFilm(filmID)) {
+            if (storage.getFilmById(filmID).getLikes().contains(userID)) {
                 log.info(String.format("Удалён лайк пользователя id = %s у фильма id = %s", userID, filmID));
-                inMemoryFilmStorage.getFilmById(filmID).removeLike(userID);
+                storage.getFilmById(filmID).removeLike(userID);
             }
         } else {
             throw new ValidationException("Не найден фильм!");
@@ -48,7 +48,7 @@ public class FilmService {
             throws ValidationException {
         if (count > 0) {
             log.info("Получен список популярных фильмов!");
-            return inMemoryFilmStorage.getFilms().stream()
+            return storage.getFilms().stream()
                     .sorted(new FilmComparator())
                     .limit(count)
                     .collect(Collectors.toList());
@@ -58,27 +58,27 @@ public class FilmService {
     }
 
     public List<Film> getFilms() {
-        return new ArrayList<>(inMemoryFilmStorage.getFilms());
+        return new ArrayList<>(storage.getFilms());
     }
 
     public void setFilm(Film film) {
-        inMemoryFilmStorage.setFilm(film);
-        log.info(String.format("Добавлен фильм: {%s}", inMemoryFilmStorage.getFilmById(film.getId())));
+        storage.setFilm(film);
+        log.info(String.format("Добавлен фильм: {%s}", storage.getFilmById(film.getId())));
     }
 
     public void updateFilm(Film film) {
-        if (inMemoryFilmStorage.containsFilm(film.getId())) {
-            inMemoryFilmStorage.setFilm(film);
-            log.info("Обновлен фильм: {}", inMemoryFilmStorage.getFilmById(film.getId()));
+        if (storage.containsFilm(film.getId())) {
+            storage.setFilm(film);
+            log.info("Обновлен фильм: {}", storage.getFilmById(film.getId()));
         } else {
             throw new NotFoundException(String.format("Фильм не найден!"));
         }
     }
 
     public Film getFilmById(Integer id) {
-        if (inMemoryFilmStorage.containsFilm(id)) {
-            log.info(String.format("Получен фильм по id = %s : %s", id, inMemoryFilmStorage.getFilmById(id)));
-            return inMemoryFilmStorage.getFilmById(id);
+        if (storage.containsFilm(id)) {
+            log.info(String.format("Получен фильм по id = %s : %s", id, storage.getFilmById(id)));
+            return storage.getFilmById(id);
         } else {
             throw new NotFoundException(String.format("Фильм по id = %s не найден!", id));
         }

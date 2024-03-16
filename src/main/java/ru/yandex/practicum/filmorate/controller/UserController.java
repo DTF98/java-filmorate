@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.service.UserService;
-import ru.yandex.practicum.filmorate.storage.InMemoryUserStorage;
+import ru.yandex.practicum.filmorate.storage.UserStorage;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -23,7 +23,7 @@ public class UserController {
     private final UserService service;
 
     @Autowired
-    public UserController(InMemoryUserStorage storage) {
+    public UserController(UserStorage storage) {
         this.service = new UserService(storage);
     }
 

@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
-import ru.yandex.practicum.filmorate.storage.InMemoryFilmStorage;
+import ru.yandex.practicum.filmorate.storage.FilmStorage;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -22,7 +22,7 @@ public class FilmController {
     private final FilmService service;
 
     @Autowired
-    public FilmController(InMemoryFilmStorage storage) {
+    public FilmController(FilmStorage storage) {
         this.service = new FilmService(storage);
     }
 
