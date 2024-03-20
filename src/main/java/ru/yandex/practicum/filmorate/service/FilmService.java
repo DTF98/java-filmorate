@@ -7,9 +7,9 @@ import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
-import ru.yandex.practicum.filmorate.utils.FilmComparator;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -17,6 +17,9 @@ import java.util.stream.Collectors;
 @Slf4j
 public class FilmService {
     private  final FilmStorage storage;
+    private int id = 1;
+    private static final Comparator<Film> SORT_BY_LIKES = Comparator.comparing(film -> film.getLikes().size(),
+            Comparator.reverseOrder());
 
     @Autowired
     public FilmService(FilmStorage storage) {
@@ -49,7 +52,7 @@ public class FilmService {
         if (count > 0) {
             log.info("Получен список популярных фильмов!");
             return storage.getFilms().stream()
-                    .sorted(new FilmComparator())
+                    .sorted(SORT_BY_LIKES)
                     .limit(count)
                     .collect(Collectors.toList());
         } else {
@@ -62,6 +65,8 @@ public class FilmService {
     }
 
     public void setFilm(Film film) {
+        film.setId(id);
+        id++;
         storage.setFilm(film);
         log.info(String.format("Добавлен фильм: {%s}", storage.getFilmById(film.getId())));
     }

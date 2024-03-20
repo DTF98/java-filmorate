@@ -17,21 +17,28 @@ public class ErrorHandler {
     @ExceptionHandler
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponse handleValidationException(final ValidationException e) {
-        log.error(e.getMessage());
+        log.error(e.getMessage(), e);
         return new ErrorResponse(e.getCause().toString(),e.getMessage());
     }
 
     @ExceptionHandler
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ErrorResponse handleIntersectionException(final IntersectionException e) {
-        log.error(e.getMessage());
+        log.error(e.getMessage(), e);
         return new ErrorResponse(e.getCause().toString(), e.getMessage());
     }
 
     @ExceptionHandler
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ErrorResponse handleNotFoundException(final NotFoundException e) {
-        log.error(e.getMessage());
+        log.error(e.getMessage(), e);
+        return new ErrorResponse(e.getCause().toString(), e.getMessage());
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public ErrorResponse handleRuntimeError(final Throwable e) {
+        log.error(e.getMessage(), e);
         return new ErrorResponse(e.getCause().toString(), e.getMessage());
     }
 }

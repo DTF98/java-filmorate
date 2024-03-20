@@ -17,6 +17,8 @@ import java.util.List;
 @Slf4j
 public class UserService {
     private final UserStorage storage;
+    private int id = 1;
+
 
     @Autowired
     public UserService(UserStorage storage) {
@@ -51,7 +53,7 @@ public class UserService {
         if (storage.containsUser(id1) && storage.containsUser(id2)) {
             HashSet<Integer> buf = new HashSet<>(storage.getUserById(id1).getFriends());
             if (buf.retainAll(storage.getUserById(id2).getFriends())) {
-                log.info(String.format("Получен список общих друзей: %s", buf));
+                log.info("Получен список общих друзей: {}", buf);
                 return buf;
             } else {
                 throw new IntersectionException("Общих друзей не найдено!");
@@ -66,6 +68,8 @@ public class UserService {
     }
 
     public void setUser(User user) {
+        user.setId(id);
+        id++;
         storage.setUser(user);
         log.info(String.format("Добавлен пользователь: {%s}", storage.getUserById(user.getId())));
     }

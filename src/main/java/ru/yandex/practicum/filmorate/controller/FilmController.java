@@ -5,20 +5,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
 
-import java.time.LocalDate;
+import javax.validation.Valid;
 import java.util.List;
 
 @RestController
 @Slf4j
 public class FilmController {
-    private int id = 1;
-    private final LocalDate movieBirthday = LocalDate.of(1895,12,28);
-    private final int maximumDescriptionLength = 200;
+    //TODO RequestID в логи
     private final FilmService service;
 
     @Autowired
@@ -43,10 +40,9 @@ public class FilmController {
     }
 
     @PostMapping(value = "/films")
-    public ResponseEntity<?> create(@RequestBody Film film) {
-        Film filmCheck = chekingFilm(film);
-        service.setFilm(filmCheck);
-        return new ResponseEntity<>(filmCheck, HttpStatus.OK);
+    public ResponseEntity<?> create(@Valid @RequestBody Film film) {
+        service.setFilm(film);
+        return new ResponseEntity<>(film, HttpStatus.OK);
     }
 
     @PutMapping("/films/{id}/like/{userId}")
@@ -56,40 +52,12 @@ public class FilmController {
     }
 
     @PutMapping(value = "/films")
-    public ResponseEntity<?> updateOrCreateNew(@RequestBody Film film) {
+    public ResponseEntity<?> updateOrCreateNew(@Valid @RequestBody Film film) {
         if (film.getId() != null) {
-            Film filmCheck = chekingFilm(film);
-            service.updateFilm(filmCheck);
-            return new ResponseEntity<>(filmCheck, HttpStatus.OK);
+            service.updateFilm(film);
+            return new ResponseEntity<>(film, HttpStatus.OK);
         } else {
             return create(film);
-        }
-    }
-
-    private Film chekingFilm(Film film) {
-        if (!film.getName().isEmpty()) {
-            if (!(film.getDescription().length() > maximumDescriptionLength)) {
-                if (!(film.getReleaseDate().isBefore(movieBirthday))) {
-                    if (!(film.getDuration() < 0)) {
-                        if (film.getId() == null) {
-                            film.setId(id);
-                            id++;
-                        }
-                        return film;
-                    } else {
-                        throw new ValidationException("продолжительность фильма должна быть положительной: " +
-                                film.getDuration());
-                    }
-                } else {
-                    throw new ValidationException("дата релиза — не раньше 28 декабря 1895 года: " +
-                            film.getReleaseDate());
-                }
-            } else {
-                throw new ValidationException("максимальная длина описания — 200 символов: " +
-                        film.getDescription().length());
-            }
-        } else {
-            throw new ValidationException("название не может быть пустым: " + film.getName());
         }
     }
 }

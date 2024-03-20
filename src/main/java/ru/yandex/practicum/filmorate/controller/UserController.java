@@ -5,21 +5,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.service.UserService;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
 
-import java.time.LocalDate;
+import javax.validation.Valid;
 import java.util.List;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @RestController
 @Slf4j
 public class UserController {
-    private int id = 1;
-
     private final UserService service;
 
     @Autowired
@@ -57,18 +53,16 @@ public class UserController {
     }
 
     @PostMapping(value = "/users")
-    public ResponseEntity<?> create(@RequestBody User user) {
-        User userCheck = ckeckingUser(user);
-        service.setUser(userCheck);
-        return new ResponseEntity<>(userCheck, HttpStatus.OK);
+    public ResponseEntity<?> create(@Valid @RequestBody User user) {
+        service.setUser(user);
+        return new ResponseEntity<>(user, HttpStatus.OK);
     }
 
     @PutMapping(value = "/users")
-    public ResponseEntity<?> updateOrCreateNew(@RequestBody User user) {
+    public ResponseEntity<?> updateOrCreateNew(@Valid @RequestBody User user) {
         if (user.getId() != null) {
-            User userCheck = ckeckingUser(user);
-            service.updateUser(userCheck);
-            return new ResponseEntity<>(userCheck, HttpStatus.OK);
+            service.updateUser(user);
+            return new ResponseEntity<>(user, HttpStatus.OK);
         } else {
             return create(user);
         }
@@ -79,29 +73,5 @@ public class UserController {
                                        @PathVariable("friendId") Integer friendId) {
         service.addToFriends(id, friendId);
         return new ResponseEntity<>(service.getUserById(id), HttpStatus.OK);
-    }
-
-    private User ckeckingUser(User user) {
-        if (Pattern.matches("^(.+)@(.+)$", user.getEmail())) {
-            if (user.getLogin() != null && !user.getLogin().isEmpty() && !user.getLogin().contains(" ")) {
-                if (user.getName() == null || user.getName().isEmpty()) {
-                    user.setName(user.getLogin());
-                }
-                if (!(user.getBirthday().isAfter(LocalDate.now()))) {
-                    if (user.getId() == null) {
-                        user.setId(id);
-                        id++;
-                    }
-                    return user;
-                } else {
-                    throw new ValidationException("дата рождения не может быть в будущем: " + user.getBirthday());
-                }
-            } else {
-                throw new ValidationException("логин не может быть пустым и содержать пробелы: " + user.getLogin());
-            }
-        } else {
-            throw new ValidationException("электронная почта не может быть пустой и должна содержать символ @: "
-                    + user.getEmail());
-        }
     }
 }
