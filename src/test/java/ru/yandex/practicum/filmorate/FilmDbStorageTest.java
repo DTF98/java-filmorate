@@ -5,12 +5,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import ru.yandex.practicum.filmorate.dao.FilmDbStorage;
 import ru.yandex.practicum.filmorate.dao.UserDbStorage;
 import ru.yandex.practicum.filmorate.dao.impl.FilmStorage;
 import ru.yandex.practicum.filmorate.dao.impl.UserStorage;
-import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.MPA;
@@ -45,13 +45,13 @@ public class FilmDbStorageTest {
                 LocalDate.of(2025,12, 12), 140, genres,
                 new MPA(3, Optional.of("PG-13")));
 
-        filmStorage.set(newFilm);
-        assertThat(filmStorage.getById(1))
+        Film saved = filmStorage.set(newFilm);
+        assertThat(filmStorage.getById(saved.getId()))
                 .isNotNull()
                 .usingRecursiveComparison()
-                .isEqualTo(newFilm);
+                .isEqualTo(saved);
 
-        assertThrows(NotFoundException.class, () -> filmStorage.getById(10));
+        assertThrows(EmptyResultDataAccessException.class, () -> filmStorage.getById(10));
     }
 
     @Test
@@ -64,7 +64,7 @@ public class FilmDbStorageTest {
                 new MPA(3, Optional.of("PG-13"))));
         User stepan = userStorage.set(new User(1, "user@email.ru", "Petuhan", "Stepan",
                 LocalDate.of(1990, 1, 1)));
-        filmStorage.setLike(1,1);
+        filmStorage.setLike(newFilm.getId(),stepan.getId());
 
         List<Integer> likes = filmStorage.getLikes(newFilm.getId());
         assertThat(likes.get(0))
@@ -72,7 +72,7 @@ public class FilmDbStorageTest {
                 .usingRecursiveComparison()
                 .isEqualTo(stepan.getId());
 
-        filmStorage.removeLike(1, 1);
+        filmStorage.removeLike(newFilm.getId(), stepan.getId());
         List<Integer> likes0 = filmStorage.getLikes(newFilm.getId());
         assertEquals(0, likes0.size());
     }
@@ -120,12 +120,12 @@ public class FilmDbStorageTest {
 
         User stepan6 = userStorage.set(new User(6, "user@email.ru", "Petuhan", "Stepan6",
                 LocalDate.of(1990, 1, 6)));
-        filmStorage.setLike(1, 1);
-        filmStorage.setLike(1, 2);
-        filmStorage.setLike(1, 3);
-        filmStorage.setLike(2, 4);
-        filmStorage.setLike(2, 5);
-        filmStorage.setLike(3, 6);
+        filmStorage.setLike(newFilm1.getId(), stepan1.getId());
+        filmStorage.setLike(newFilm1.getId(), stepan2.getId());
+        filmStorage.setLike(newFilm1.getId(), stepan3.getId());
+        filmStorage.setLike(newFilm2.getId(), stepan4.getId());
+        filmStorage.setLike(newFilm2.getId(), stepan5.getId());
+        filmStorage.setLike(newFilm3.getId(), stepan6.getId());
 
         List<Film> top = filmStorage.getMostPopularFilms(1000);
         List<Film> test = List.of(newFilm1,newFilm2,newFilm3);

@@ -31,11 +31,10 @@ public class UserDbStorageTest {
 
     @Test
     public void testFindUserByIdAndCreateUser() {
-        User newUser = new User(1, "user@email.ru", "vanya123", "Ivan Petrov",
-                LocalDate.of(1990, 1, 1));
-        storage.set(newUser);
+        User newUser = storage.set(new User(1, "user@email.ru", "vanya123", "Ivan Petrov",
+                LocalDate.of(1990, 1, 1)));
 
-        User savedUser = storage.getById(1);
+        User savedUser = storage.getById(newUser.getId());
 
         assertThat(savedUser)
                 .isNotNull()
@@ -47,39 +46,33 @@ public class UserDbStorageTest {
 
     @Test
     public void testAddGetRemoveFriend() {
-        User newUser1 = new User(1, "1@mail.ru", "DTF1","Denis1",
-                LocalDate.of(2001,11,11));
-        User newUser2 = new User(2, "2@mail.ru", "DTF2","Denis2",
-                LocalDate.of(2001,11,12));
+        User newUser1 = storage.set(new User(1, "1@mail.ru", "DTF1","Denis1",
+                LocalDate.of(2001,11,11)));
+        User newUser2 = storage.set(new User(2, "2@mail.ru", "DTF2","Denis2",
+                LocalDate.of(2001,11,12)));
 
-        storage.set(newUser1);
-        storage.set(newUser2);
+        storage.addFriend(newUser1.getId(), newUser2.getId());
 
-        storage.addFriend(1,2);
-
-        List<User> friends1 = storage.getFriends(1);
+        List<User> friends1 = storage.getFriends(newUser1.getId());
         assertThat(friends1.get(0))
                 .isNotNull()
                 .usingRecursiveComparison()
                 .isEqualTo(newUser2);
 
-        storage.removeFriend(1,2);
+        storage.removeFriend(newUser1.getId(),newUser2.getId());
 
-        List<User> friends0 = storage.getFriends(1);
+        List<User> friends0 = storage.getFriends(newUser1.getId());
         assertEquals(0, friends0.size());
     }
 
     @Test
     public void testUpdateUser() {
-        User newUser1 = new User(1, "1@mail.ru", "DTF1","Denis1",
-                LocalDate.of(2001,11,11));
-        storage.set(newUser1);
+        User newUser1 = storage.set(new User(1, "1@mail.ru", "DTF1","Denis1",
+                LocalDate.of(2001,11,11)));
+        User userUpdate = storage.update(new User(newUser1.getId(), "2@mail.ru", "DTF2","Denis2",
+                LocalDate.of(2001,11,12)));
 
-        User userUpdate = new User(1, "2@mail.ru", "DTF2","Denis2",
-                LocalDate.of(2001,11,12));
-        storage.update(userUpdate);
-
-        User newUser = storage.getById(1);
+        User newUser = storage.getById(userUpdate.getId());
         assertThat(newUser)
                 .isNotNull()
                 .usingRecursiveComparison()

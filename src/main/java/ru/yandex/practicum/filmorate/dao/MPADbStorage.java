@@ -15,7 +15,7 @@ import java.util.Optional;
 @Component
 @Slf4j
 @AllArgsConstructor
-public class MPADbStorage implements MPAStorage{
+public class MPADbStorage implements MPAStorage {
     private final JdbcTemplate jdbcTemplate;
 
     public MPA set(MPA mpa) {

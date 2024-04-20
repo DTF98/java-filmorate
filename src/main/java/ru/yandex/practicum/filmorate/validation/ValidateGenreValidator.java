@@ -9,11 +9,11 @@ import java.util.Set;
 public class ValidateGenreValidator implements ConstraintValidator<ValidateGenre, Set<Genre>> {
     @Override
     public boolean isValid(Set<Genre> value, ConstraintValidatorContext constraintValidatorContext) {
-        if(value.isEmpty()) {
+        if (value.isEmpty()) {
             return true;
         }
         for (Genre g : value) {
-            if(g.getId() > 6 || g.getId() < 0) {
+            if (g.getId() > 6 || g.getId() < 0) {
                 return false;
             }
         }

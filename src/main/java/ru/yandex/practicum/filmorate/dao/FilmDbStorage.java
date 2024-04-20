@@ -158,7 +158,7 @@ public class FilmDbStorage implements FilmStorage {
                 .filter(elem -> !elem.equals("null"))
                 .collect(Collectors.toList()
                 );
-        for (int i = 0; i < id.size(); i++ ) {
+        for (int i = 0; i < id.size(); i++) {
             newGenres.add(new Genre(id.get(i), Optional.ofNullable(name.get(i))));
         }
         return Film.builder()
