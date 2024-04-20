@@ -7,11 +7,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.service.UserService;
-import ru.yandex.practicum.filmorate.storage.UserStorage;
 
 import javax.validation.Valid;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @RestController
 @Slf4j
@@ -19,8 +17,8 @@ public class UserController {
     private final UserService service;
 
     @Autowired
-    public UserController(UserStorage storage) {
-        this.service = new UserService(storage);
+    public UserController(UserService service) {
+        this.service = service;
     }
 
     @GetMapping("/users")
@@ -30,19 +28,13 @@ public class UserController {
 
     @GetMapping("/users/{id}/friends")
     public ResponseEntity<?> getFriends(@PathVariable("id") Integer id) {
-        return new ResponseEntity<>(service.getUserById(id).getFriends()
-                .stream()
-                .map(service::getUserById)
-                .collect(Collectors.toList()), HttpStatus.OK);
+        return new ResponseEntity<>(service.getFriends(id), HttpStatus.OK);
     }
 
     @GetMapping("/users/{id}/friends/common/{otherId}")
     public ResponseEntity<?> getListOfMutualFriends(@PathVariable("id") Integer id,
                                                     @PathVariable("otherId") Integer otherId) {
-        return new ResponseEntity<>(service.searchForCommonFriends(id, otherId).stream()
-                .map(service::getUserById)
-                .collect(Collectors.toList()),
-                HttpStatus.OK);
+        return new ResponseEntity<>(service.searchForCommonFriends(id, otherId), HttpStatus.OK);
     }
 
     @DeleteMapping("/users/{id}/friends/{friendId}")
@@ -54,18 +46,12 @@ public class UserController {
 
     @PostMapping(value = "/users")
     public ResponseEntity<?> create(@Valid @RequestBody User user) {
-        service.setUser(user);
-        return new ResponseEntity<>(user, HttpStatus.OK);
+        return new ResponseEntity<>(service.setUser(user), HttpStatus.OK);
     }
 
     @PutMapping(value = "/users")
-    public ResponseEntity<?> updateOrCreateNew(@Valid @RequestBody User user) {
-        if (user.getId() != null) {
-            service.updateUser(user);
-            return new ResponseEntity<>(user, HttpStatus.OK);
-        } else {
-            return create(user);
-        }
+    public ResponseEntity<?> update(@Valid @RequestBody User user) {
+        return new ResponseEntity<>(service.updateUser(user), HttpStatus.OK);
     }
 
     @PutMapping("/users/{id}/friends/{friendId}")

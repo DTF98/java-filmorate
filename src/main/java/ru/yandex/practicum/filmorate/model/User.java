@@ -15,10 +15,8 @@ import java.util.Set;
 @Getter
 @Setter
 @ToString
-@AllArgsConstructor
 @EqualsAndHashCode
 public class User {
-    private Set<Integer> friends;
     private Integer id;
     @NotBlank(message = "электронная почта не может быть пустой")
     @Email(message = "электронная почта должна содержать символ @")
@@ -33,22 +31,12 @@ public class User {
 
     @Builder
     @Jacksonized
-    public User(Integer id, String email, String login, String name, LocalDate birthday, Set<Integer> friends) {
+    public User(Integer id, String email, String login, String name, LocalDate birthday) {
         this.id = id;
         this.email = email;
         this.login = login;
         if (name == null || name.isBlank()) this.name = login;
         else this.name = name;
         this.birthday = birthday;
-        this.friends = friends == null ? new HashSet<>() : friends;
-    }
-
-    public void removeFriend(Integer id) {
-            friends.remove(id);
-    }
-
-    public void setFriend(Integer id) {
-        friends.add(id);
-
     }
 }
