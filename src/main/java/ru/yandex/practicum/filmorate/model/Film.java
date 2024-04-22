@@ -19,7 +19,6 @@ import java.util.Set;
 @Getter
 @Setter
 @ToString
-@EqualsAndHashCode
 public class Film {
     private Integer id;
     @NotBlank
@@ -57,7 +56,7 @@ public class Film {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Film item = (Film) o;
-        return id == item.id && Objects.equals(name, item.name) && Objects.equals(description, item.description) &&
-                releaseDate.isEqual(item.releaseDate) && duration == item.duration;
+        return Objects.equals(id, item.id) && Objects.equals(name, item.name) && Objects.equals(description, item.description) &&
+                releaseDate.isEqual(item.releaseDate) && Objects.equals(duration, item.duration);
     }
 }

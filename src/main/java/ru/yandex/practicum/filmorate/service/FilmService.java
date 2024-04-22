@@ -28,6 +28,7 @@ public class FilmService {
 
     public List<Film> search10MostPopularFilms(Integer count) {
         log.info("Получен список популярных фильмов!");
+        System.out.println(filmStorage.getMostPopularFilms(count));
         return filmStorage.getMostPopularFilms(count);
     }
 

@@ -38,7 +38,7 @@ public class UserDbStorage implements UserStorage {
                     item.getBirthday(), item.getId());
             return item;
         } else {
-            throw new NotFoundException(String.format("Пользователь не найден!"));
+            throw new NotFoundException("Пользователь не найден!");
         }
     }
 

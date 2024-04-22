@@ -50,7 +50,7 @@ public class MPADbStorage implements MPAStorage {
     private MPA mapRowToMPA(ResultSet resultSet, int rowNum) throws SQLException {
         return MPA.builder()
                 .id(resultSet.getInt("mpa_id"))
-                .name(Optional.ofNullable(resultSet.getString("mpa")))
+                .name(resultSet.getString("mpa"))
                 .build();
     }
 }

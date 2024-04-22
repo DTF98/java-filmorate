@@ -39,11 +39,11 @@ public class FilmDbStorageTest {
     @Test
     public void createAndGetByIdNewFilm() {
         Set<Genre> genres = new TreeSet<>(Comparator.comparing(Genre::getId));
-        genres.add(new Genre(1, Optional.of("Комедия")));
-        genres.add(new Genre(2, Optional.of("Драма")));
+        genres.add(new Genre(1, "Комедия"));
+        genres.add(new Genre(2, "Драма"));
         Film newFilm = new Film(1, "Shakal", "Sakal is back",
                 LocalDate.of(2025,12, 12), 140, genres,
-                new MPA(3, Optional.of("PG-13")));
+                new MPA(3, "PG-13"));
 
         Film saved = filmStorage.set(newFilm);
         assertThat(filmStorage.getById(saved.getId()))
@@ -57,11 +57,11 @@ public class FilmDbStorageTest {
     @Test
     void testAddRemoveGetLikes() {
         Set<Genre> genres = new TreeSet<>(Comparator.comparing(Genre::getId));
-        genres.add(new Genre(1, Optional.of("Комедия")));
-        genres.add(new Genre(2, Optional.of("Драма")));
+        genres.add(new Genre(1, "Комедия"));
+        genres.add(new Genre(2, "Драма"));
         Film newFilm = filmStorage.set(new Film(1, "Shakal", "Sakal is back",
                 LocalDate.of(2025,12, 12), 140, genres,
-                new MPA(3, Optional.of("PG-13"))));
+                new MPA(3, "PG-13")));
         User stepan = userStorage.set(new User(1, "user@email.ru", "Petuhan", "Stepan",
                 LocalDate.of(1990, 1, 1)));
         filmStorage.setLike(newFilm.getId(),stepan.getId());
@@ -80,28 +80,28 @@ public class FilmDbStorageTest {
     @Test
     void testGetPopular() {
         Set<Genre> genres1 = new TreeSet<>(Comparator.comparing(Genre::getId));
-        genres1.add(new Genre(1, Optional.of("Комедия")));
-        genres1.add(new Genre(2, Optional.of("Драма")));
+        genres1.add(new Genre(1, "Комедия"));
+        genres1.add(new Genre(2, "Драма"));
 
         Set<Genre> genres2 = new TreeSet<>(Comparator.comparing(Genre::getId));
-        genres2.add(new Genre(3, Optional.of("Мультфильм")));
-        genres2.add(new Genre(4, Optional.of("Триллер")));
+        genres2.add(new Genre(3, "Мультфильм"));
+        genres2.add(new Genre(4, "Триллер"));
 
         Set<Genre> genres3 = new TreeSet<>(Comparator.comparing(Genre::getId));
-        genres3.add(new Genre(5, Optional.of("Документальный")));
-        genres3.add(new Genre(6, Optional.of("Боевик")));
+        genres3.add(new Genre(5, "Документальный"));
+        genres3.add(new Genre(6, "Боевик"));
 
         Film newFilm1 = filmStorage.set(new Film(1, "Shakal1", "Sakal is back1",
                 LocalDate.of(2025,12, 11), 140, genres1,
-                new MPA(1, Optional.of("G"))));
+                new MPA(1, "G")));
 
         Film newFilm2 = filmStorage.set(new Film(2, "Shakal2", "Sakal is back2",
                 LocalDate.of(2025,12, 12), 140, genres2,
-                new MPA(2, Optional.of("PG"))));
+                new MPA(2, "PG")));
 
         Film newFilm3 = filmStorage.set(new Film(3, "Shakal3", "Sakal is back3",
                 LocalDate.of(2025,12, 13), 140, genres3,
-                new MPA(3, Optional.of("PG-13"))));
+                new MPA(3, "PG-13")));
 
         User stepan1 = userStorage.set(new User(1, "user@email.ru", "Petuhan", "Stepan1",
                 LocalDate.of(1990, 1, 1)));

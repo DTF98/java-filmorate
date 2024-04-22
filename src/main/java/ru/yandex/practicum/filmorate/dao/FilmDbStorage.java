@@ -118,7 +118,7 @@ public class FilmDbStorage implements FilmStorage {
 
     public void setLike(Integer filmID, Integer userID) {
         if (contains(filmID)) {
-            String sqlLike = "insert into film_likes (user_id, film_id) values (?, ?)";
+            String sqlLike = "MERGE INTO film_likes KEY(user_id, film_id) VALUES (?,?)";
             jdbcTemplate.update(sqlLike, userID, filmID);
         } else {
             throw new NotFoundException(String.format("Фильм по id = %s не найден!", filmID));
@@ -159,7 +159,7 @@ public class FilmDbStorage implements FilmStorage {
                 .collect(Collectors.toList()
                 );
         for (int i = 0; i < id.size(); i++) {
-            newGenres.add(new Genre(id.get(i), Optional.ofNullable(name.get(i))));
+            newGenres.add(new Genre(id.get(i), name.get(i)));
         }
         return Film.builder()
                 .id(resultSet.getInt("id"))
@@ -168,7 +168,7 @@ public class FilmDbStorage implements FilmStorage {
                 .releaseDate(LocalDate.parse(resultSet.getString("release_date")))
                 .duration(resultSet.getInt("duration"))
                 .genres(newGenres)
-                .mpa(new MPA(resultSet.getInt("mpa_id"), Optional.ofNullable(resultSet.getString("mpa"))))
+                .mpa(new MPA(resultSet.getInt("mpa_id"), resultSet.getString("mpa")))
                 .build();
     }
 
