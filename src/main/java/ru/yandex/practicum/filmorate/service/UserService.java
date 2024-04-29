@@ -3,12 +3,13 @@ package ru.yandex.practicum.filmorate.service;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.filmorate.dao.impl.UserStorage;
+import ru.yandex.practicum.filmorate.dao.UserStorage;
 import ru.yandex.practicum.filmorate.exception.IntersectionException;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @Slf4j
@@ -16,14 +17,14 @@ import java.util.List;
 public class UserService {
     private final UserStorage storage;
 
-    public void addToFriends(Integer userId, Integer friendId) {
-        storage.addFriend(userId, friendId);
-        log.info(String.format("Создана дружба у пользователей %s и %s", userId, friendId));
+    public User addToFriends(Integer userId, Integer friendId) {
+        log.info("Добавление в друзья у пользователей {} и {}", userId, friendId);
+        return storage.addFriend(userId, friendId);
     }
 
-    public void removeFriend(Integer userId, Integer friendId) {
-        storage.removeFriend(userId, friendId);
-        log.info("Удалили из друзей userId={}, friendId={}", userId, friendId);
+    public Integer removeFriend(Integer userId, Integer friendId) {
+        log.info("Удаление из друзей userId={}, friendId={}", userId, friendId);
+        return storage.removeFriend(userId, friendId);
     }
 
     public List<User> getFriends(Integer id) {
@@ -47,7 +48,7 @@ public class UserService {
     }
 
     public User setUser(User user) {
-        User newUser = storage.set(user);
+        User newUser = storage.add(user);
         log.info(String.format("Добавлен пользователь: {%s}", newUser));
         return user;
     }
@@ -59,9 +60,12 @@ public class UserService {
     }
 
     public User getUserById(Integer id) {
-        User user = storage.getById(id);
-        log.info(String.format("Получен пользователь : %s", id));
-        return user;
+        Optional<User> user = storage.getById(id);
+        if (user.isPresent()) {
+            log.info(String.format("Получен пользователь : %s", id));
+            return user.get();
+        } else {
+            return null;
+        }
     }
-
 }

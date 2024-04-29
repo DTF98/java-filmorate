@@ -5,19 +5,22 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
-import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
-import ru.yandex.practicum.filmorate.dao.FilmDbStorage;
-import ru.yandex.practicum.filmorate.dao.UserDbStorage;
-import ru.yandex.practicum.filmorate.dao.impl.FilmStorage;
-import ru.yandex.practicum.filmorate.dao.impl.UserStorage;
+import ru.yandex.practicum.filmorate.dao.FilmStorage;
+import ru.yandex.practicum.filmorate.dao.UserStorage;
+import ru.yandex.practicum.filmorate.dao.impl.FilmDbStorage;
+import ru.yandex.practicum.filmorate.dao.impl.UserDbStorage;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.MPA;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.time.LocalDate;
-import java.util.*;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -45,13 +48,13 @@ public class FilmDbStorageTest {
                 LocalDate.of(2025,12, 12), 140, genres,
                 new MPA(3, "PG-13"));
 
-        Film saved = filmStorage.set(newFilm);
-        assertThat(filmStorage.getById(saved.getId()))
+        Film saved = filmStorage.add(newFilm);
+        assertThat(filmStorage.getById(saved.getId()).get())
                 .isNotNull()
                 .usingRecursiveComparison()
                 .isEqualTo(saved);
 
-        assertThrows(EmptyResultDataAccessException.class, () -> filmStorage.getById(10));
+        assertThrows(NotFoundException.class, () -> filmStorage.getById(10));
     }
 
     @Test
@@ -59,12 +62,12 @@ public class FilmDbStorageTest {
         Set<Genre> genres = new TreeSet<>(Comparator.comparing(Genre::getId));
         genres.add(new Genre(1, "Комедия"));
         genres.add(new Genre(2, "Драма"));
-        Film newFilm = filmStorage.set(new Film(1, "Shakal", "Sakal is back",
+        Film newFilm = filmStorage.add(new Film(1, "Shakal", "Sakal is back",
                 LocalDate.of(2025,12, 12), 140, genres,
                 new MPA(3, "PG-13")));
-        User stepan = userStorage.set(new User(1, "user@email.ru", "Petuhan", "Stepan",
+        User stepan = userStorage.add(new User(1, "user@email.ru", "Petuhan", "Stepan",
                 LocalDate.of(1990, 1, 1)));
-        filmStorage.setLike(newFilm.getId(),stepan.getId());
+        filmStorage.addLike(newFilm.getId(),stepan.getId());
 
         List<Integer> likes = filmStorage.getLikes(newFilm.getId());
         assertThat(likes.get(0))
@@ -91,41 +94,41 @@ public class FilmDbStorageTest {
         genres3.add(new Genre(5, "Документальный"));
         genres3.add(new Genre(6, "Боевик"));
 
-        Film newFilm1 = filmStorage.set(new Film(1, "Shakal1", "Sakal is back1",
+        Film newFilm1 = filmStorage.add(new Film(1, "Shakal1", "Sakal is back1",
                 LocalDate.of(2025,12, 11), 140, genres1,
                 new MPA(1, "G")));
 
-        Film newFilm2 = filmStorage.set(new Film(2, "Shakal2", "Sakal is back2",
+        Film newFilm2 = filmStorage.add(new Film(2, "Shakal2", "Sakal is back2",
                 LocalDate.of(2025,12, 12), 140, genres2,
                 new MPA(2, "PG")));
 
-        Film newFilm3 = filmStorage.set(new Film(3, "Shakal3", "Sakal is back3",
+        Film newFilm3 = filmStorage.add(new Film(3, "Shakal3", "Sakal is back3",
                 LocalDate.of(2025,12, 13), 140, genres3,
                 new MPA(3, "PG-13")));
 
-        User stepan1 = userStorage.set(new User(1, "user@email.ru", "Petuhan", "Stepan1",
+        User stepan1 = userStorage.add(new User(1, "user@email.ru", "Petuhan", "Stepan1",
                 LocalDate.of(1990, 1, 1)));
 
-        User stepan2 = userStorage.set(new User(2, "user@email.ru", "Petuhan", "Stepan2",
+        User stepan2 = userStorage.add(new User(2, "user@email.ru", "Petuhan", "Stepan2",
                 LocalDate.of(1990, 1, 2)));
 
-        User stepan3 = userStorage.set(new User(3, "user@email.ru", "Petuhan", "Stepan3",
+        User stepan3 = userStorage.add(new User(3, "user@email.ru", "Petuhan", "Stepan3",
                 LocalDate.of(1990, 1, 3)));
 
-        User stepan4 = userStorage.set(new User(4, "user@email.ru", "Petuhan", "Stepan4",
+        User stepan4 = userStorage.add(new User(4, "user@email.ru", "Petuhan", "Stepan4",
                 LocalDate.of(1990, 1, 4)));
 
-        User stepan5 = userStorage.set(new User(5, "user@email.ru", "Petuhan", "Stepan5",
+        User stepan5 = userStorage.add(new User(5, "user@email.ru", "Petuhan", "Stepan5",
                 LocalDate.of(1990, 1, 5)));
 
-        User stepan6 = userStorage.set(new User(6, "user@email.ru", "Petuhan", "Stepan6",
+        User stepan6 = userStorage.add(new User(6, "user@email.ru", "Petuhan", "Stepan6",
                 LocalDate.of(1990, 1, 6)));
-        filmStorage.setLike(newFilm1.getId(), stepan1.getId());
-        filmStorage.setLike(newFilm1.getId(), stepan2.getId());
-        filmStorage.setLike(newFilm1.getId(), stepan3.getId());
-        filmStorage.setLike(newFilm2.getId(), stepan4.getId());
-        filmStorage.setLike(newFilm2.getId(), stepan5.getId());
-        filmStorage.setLike(newFilm3.getId(), stepan6.getId());
+        filmStorage.addLike(newFilm1.getId(), stepan1.getId());
+        filmStorage.addLike(newFilm1.getId(), stepan2.getId());
+        filmStorage.addLike(newFilm1.getId(), stepan3.getId());
+        filmStorage.addLike(newFilm2.getId(), stepan4.getId());
+        filmStorage.addLike(newFilm2.getId(), stepan5.getId());
+        filmStorage.addLike(newFilm3.getId(), stepan6.getId());
 
         List<Film> top = filmStorage.getMostPopularFilms(1000);
         List<Film> test = List.of(newFilm1,newFilm2,newFilm3);

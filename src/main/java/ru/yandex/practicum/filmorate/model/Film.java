@@ -1,6 +1,9 @@
 package ru.yandex.practicum.filmorate.model;
 
-import lombok.*;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 import lombok.experimental.NonFinal;
 import lombok.extern.jackson.Jacksonized;
 import ru.yandex.practicum.filmorate.validation.ValidateDate;
@@ -26,7 +29,7 @@ public class Film {
     @Size(max = 200, message = "максимальная длина описания — 200 символов")
     private String description;
     @NotNull
-    @ValidateDate(message = "Дата релиза должна быть не раньше 28 декабря 1895 года")
+    @ValidateDate(message = "28.12.1895")
     private LocalDate releaseDate;
     @NotNull
     @Positive
@@ -49,14 +52,5 @@ public class Film {
         this.duration = duration;
         this.genres = Objects.requireNonNullElseGet(genres, HashSet::new);
         this.mpa = mpa;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Film item = (Film) o;
-        return Objects.equals(id, item.id) && Objects.equals(name, item.name) && Objects.equals(description, item.description) &&
-                releaseDate.isEqual(item.releaseDate) && Objects.equals(duration, item.duration);
     }
 }
