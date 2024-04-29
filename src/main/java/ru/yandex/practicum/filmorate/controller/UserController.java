@@ -2,14 +2,15 @@ package ru.yandex.practicum.filmorate.controller;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.service.UserService;
 
 import javax.validation.Valid;
-import java.util.List;
+
+import static ru.yandex.practicum.filmorate.util.ResponseUtil.respondSuccess;
+import static ru.yandex.practicum.filmorate.util.ResponseUtil.respondSuccessList;
 
 @RestController
 @Slf4j
@@ -22,42 +23,40 @@ public class UserController {
     }
 
     @GetMapping("/users")
-    public List<User> findAll() {
-        return service.getUsers();
+    public ResponseEntity<?> findAll() {
+        return respondSuccessList(service.getUsers());
     }
 
     @GetMapping("/users/{id}/friends")
     public ResponseEntity<?> getFriends(@PathVariable("id") Integer id) {
-        return new ResponseEntity<>(service.getFriends(id), HttpStatus.OK);
+        return respondSuccessList(service.getFriends(id));
     }
 
     @GetMapping("/users/{id}/friends/common/{otherId}")
     public ResponseEntity<?> getListOfMutualFriends(@PathVariable("id") Integer id,
                                                     @PathVariable("otherId") Integer otherId) {
-        return new ResponseEntity<>(service.searchForCommonFriends(id, otherId), HttpStatus.OK);
+        return respondSuccessList(service.searchForCommonFriends(id, otherId));
     }
 
     @DeleteMapping("/users/{id}/friends/{friendId}")
-    public HttpStatus deleteFriend(@PathVariable("id") Integer id,
+    public ResponseEntity<?> deleteFriend(@PathVariable("id") Integer id,
                                  @PathVariable("friendId") Integer friendId) {
-        service.removeFriend(id, friendId);
-        return HttpStatus.OK;
+        return respondSuccess(service.removeFriend(id, friendId));
     }
 
     @PostMapping(value = "/users")
     public ResponseEntity<?> create(@Valid @RequestBody User user) {
-        return new ResponseEntity<>(service.setUser(user), HttpStatus.OK);
+        return respondSuccess(service.setUser(user));
     }
 
     @PutMapping(value = "/users")
     public ResponseEntity<?> update(@Valid @RequestBody User user) {
-        return new ResponseEntity<>(service.updateUser(user), HttpStatus.OK);
+        return respondSuccess(service.updateUser(user));
     }
 
     @PutMapping("/users/{id}/friends/{friendId}")
     public ResponseEntity<?> addFriend(@PathVariable("id") Integer id,
                                        @PathVariable("friendId") Integer friendId) {
-        service.addToFriends(id, friendId);
-        return new ResponseEntity<>(service.getUserById(id), HttpStatus.OK);
+        return respondSuccess(service.addToFriends(id, friendId));
     }
 }

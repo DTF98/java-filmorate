@@ -6,8 +6,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
 import org.springframework.jdbc.core.JdbcTemplate;
-import ru.yandex.practicum.filmorate.dao.UserDbStorage;
-import ru.yandex.practicum.filmorate.dao.impl.UserStorage;
+import ru.yandex.practicum.filmorate.dao.impl.UserDbStorage;
+import ru.yandex.practicum.filmorate.dao.UserStorage;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
 
@@ -31,10 +31,10 @@ public class UserDbStorageTest {
 
     @Test
     public void testFindUserByIdAndCreateUser() {
-        User newUser = storage.set(new User(1, "user@email.ru", "vanya123", "Ivan Petrov",
+        User newUser = storage.add(new User(1, "user@email.ru", "vanya123", "Ivan Petrov",
                 LocalDate.of(1990, 1, 1)));
 
-        User savedUser = storage.getById(newUser.getId());
+        User savedUser = storage.getById(newUser.getId()).get();
 
         assertThat(savedUser)
                 .isNotNull()
@@ -46,9 +46,9 @@ public class UserDbStorageTest {
 
     @Test
     public void testAddGetRemoveFriend() {
-        User newUser1 = storage.set(new User(1, "1@mail.ru", "DTF1","Denis1",
+        User newUser1 = storage.add(new User(1, "1@mail.ru", "DTF1","Denis1",
                 LocalDate.of(2001,11,11)));
-        User newUser2 = storage.set(new User(2, "2@mail.ru", "DTF2","Denis2",
+        User newUser2 = storage.add(new User(2, "2@mail.ru", "DTF2","Denis2",
                 LocalDate.of(2001,11,12)));
 
         storage.addFriend(newUser1.getId(), newUser2.getId());
@@ -67,12 +67,12 @@ public class UserDbStorageTest {
 
     @Test
     public void testUpdateUser() {
-        User newUser1 = storage.set(new User(1, "1@mail.ru", "DTF1","Denis1",
+        User newUser1 = storage.add(new User(1, "1@mail.ru", "DTF1","Denis1",
                 LocalDate.of(2001,11,11)));
         User userUpdate = storage.update(new User(newUser1.getId(), "2@mail.ru", "DTF2","Denis2",
                 LocalDate.of(2001,11,12)));
 
-        User newUser = storage.getById(userUpdate.getId());
+        User newUser = storage.getById(userUpdate.getId()).get();
         assertThat(newUser)
                 .isNotNull()
                 .usingRecursiveComparison()

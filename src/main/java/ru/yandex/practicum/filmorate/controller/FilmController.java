@@ -2,14 +2,16 @@ package ru.yandex.practicum.filmorate.controller;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
 
 import javax.validation.Valid;
-import java.util.List;
+import java.util.Collection;
+
+import static ru.yandex.practicum.filmorate.util.ResponseUtil.respondSuccess;
+import static ru.yandex.practicum.filmorate.util.ResponseUtil.respondSuccessList;
 
 @RestController
 @RequestMapping(path = "films")
@@ -23,40 +25,38 @@ public class FilmController {
     }
 
     @GetMapping
-    public List<Film> findAll() {
-        return service.getFilms();
+    public ResponseEntity<Collection<Film>> get() {
+        return respondSuccessList(service.getFilms());
     }
 
     @GetMapping("/popular")
     public ResponseEntity<?> getTopFilms(@RequestParam(defaultValue = "10", required = false) Integer count) {
-        return new ResponseEntity<>(service.search10MostPopularFilms(count), HttpStatus.OK);
+        return respondSuccessList(service.search10MostPopularFilms(count));
     }
 
     @DeleteMapping("/{id}/like/{userId}")
-    public HttpStatus deleteLike(@PathVariable("id") Integer id, @PathVariable("userId") Integer userId) {
-        service.removeLike(userId, id);
-        return HttpStatus.OK;
+    public ResponseEntity<?> deleteLike(@PathVariable("id") Integer id, @PathVariable("userId") Integer userId) {
+        return respondSuccess(service.removeLike(userId, id));
     }
 
     @PostMapping
     public ResponseEntity<?> create(@Valid @RequestBody Film film) {
-        return new ResponseEntity<>(service.setFilm(film), HttpStatus.OK);
+        return respondSuccess(service.addFilm(film));
     }
 
     @PutMapping("/{id}/like/{userId}")
     public ResponseEntity<?> addLike(@PathVariable("id") Integer id, @PathVariable("userId") Integer userId) {
-        service.addLike(userId, id);
-        return new ResponseEntity<>(service.getFilmById(id), HttpStatus.OK);
+        return respondSuccess(service.addLike(userId, id));
     }
 
     @PutMapping
     public ResponseEntity<?> update(@RequestBody Film film) {
-        return new ResponseEntity<>(service.updateFilm(film), HttpStatus.OK);
+        return respondSuccess(service.updateFilm(film));
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<?> getFilm(@PathVariable Integer id) {
-        return new ResponseEntity<>(service.getFilmById(id), HttpStatus.OK);
+        return respondSuccess(service.getFilmById(id));
     }
 }
 

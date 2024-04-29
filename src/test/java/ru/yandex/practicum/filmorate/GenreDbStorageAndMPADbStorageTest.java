@@ -6,14 +6,15 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
 import org.springframework.jdbc.core.JdbcTemplate;
-import ru.yandex.practicum.filmorate.dao.GenreDbStorage;
-import ru.yandex.practicum.filmorate.dao.MPADbStorage;
-import ru.yandex.practicum.filmorate.dao.impl.GenreStorage;
-import ru.yandex.practicum.filmorate.dao.impl.MPAStorage;
+import ru.yandex.practicum.filmorate.dao.impl.GenreDbStorage;
+import ru.yandex.practicum.filmorate.dao.impl.MPADbStorage;
+import ru.yandex.practicum.filmorate.dao.GenreStorage;
+import ru.yandex.practicum.filmorate.dao.MPAStorage;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.MPA;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -38,38 +39,38 @@ public class GenreDbStorageAndMPADbStorageTest {
     }
 
     @Test
-    public void getAndGentByIdGenres() {
+    public void getAndGetByIdGenres() {
         assertDoesNotThrow(() -> genreStorage.get());
         assertThat(genreStorage.get())
                 .isNotNull()
                 .usingRecursiveComparison()
                 .isEqualTo(genres);
 
-        assertThat(genreStorage.getById(1))
+        assertThat(genreStorage.getById(1).get())
                 .isNotNull()
                 .usingRecursiveComparison()
                 .isEqualTo(genres.get(0));
 
         assertThat(genreStorage.getById(10))
                 .usingRecursiveComparison()
-                .isEqualTo(null);
+                .isEqualTo(Optional.empty());
     }
 
     @Test
-    public void getAndGentByIdMPA() {
+    public void getAndGetByIdMPA() {
         assertDoesNotThrow(() -> mpaStorage.get());
         assertThat(mpaStorage.get())
                 .isNotNull()
                 .usingRecursiveComparison()
                 .isEqualTo(mpa);
 
-        assertThat(mpaStorage.getById(1))
+        assertThat(mpaStorage.getById(1).get())
                 .isNotNull()
                 .usingRecursiveComparison()
                 .isEqualTo(mpa.get(0));
 
         assertThat(mpaStorage.getById(10))
                 .usingRecursiveComparison()
-                .isEqualTo(null);
+                .isEqualTo(Optional.empty());
     }
 }
