@@ -1,16 +1,18 @@
-insert into MPA select * from (
-select 1, 'G' union
-select 2, 'PG' union
-select 3, 'PG-13' union
-select 4, 'R' union
-select 5, 'NC-17'
-) where not exists(select * from MPA);
+DELETE FROM GENRES;
+DELETE FROM MPA;
 
-insert into GENRES select * from (
-select 1, 'Комедия' union
-select 2, 'Драма' union
-select 3, 'Мультфильм' union
-select 4, 'Триллер' union
-select 5, 'Документальный' union
-select 6, 'Боевик'
-) where not exists(select * from GENRES);
+INSERT INTO GENRES (genre_id, genre)
+VALUES (1, 'Комедия'),
+       (2, 'Драма'),
+       (3, 'Мультфильм'),
+       (4, 'Триллер'),
+       (5, 'Документальный'),
+       (6, 'Боевик');
+
+INSERT INTO  MPA (mpa_id, mpa)
+VALUES (1, 'G'),
+       (2, 'PG'),
+       (3, 'PG-13'),
+       (4, 'R'),
+       (5, 'NC-17');
+
