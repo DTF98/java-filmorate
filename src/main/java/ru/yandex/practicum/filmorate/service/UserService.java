@@ -4,12 +4,11 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.dao.UserStorage;
-import ru.yandex.practicum.filmorate.exception.IntersectionException;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @Slf4j
@@ -35,11 +34,13 @@ public class UserService {
     public List<User> searchForCommonFriends(Integer id1, Integer id2) {
         List<User> friends1 = storage.getFriends(id1);
         List<User> friends2 = storage.getFriends(id2);
-        if (friends1.retainAll(friends2)) {
+        friends1.retainAll(friends2);
+        if (!friends1.isEmpty()) {
             log.info("Получен список общих друзей: {}", friends1);
             return friends1;
         } else {
-            throw new IntersectionException("Общих друзей не найдено!");
+            log.info("Общие друзья не найдены!");
+            return new ArrayList<>();
         }
     }
 
@@ -59,13 +60,11 @@ public class UserService {
         return newUser;
     }
 
-    public User getUserById(Integer id) {
-        Optional<User> user = storage.getById(id);
-        if (user.isPresent()) {
-            log.info(String.format("Получен пользователь : %s", id));
-            return user.get();
-        } else {
-            return null;
-        }
+    public User getById(Integer id) {
+        return storage.getById(id).orElseThrow(() -> {
+            String errorText = "Пользователь с таким Id не найден: " + id;
+            log.error(errorText);
+            return new NotFoundException(errorText);
+        });
     }
 }

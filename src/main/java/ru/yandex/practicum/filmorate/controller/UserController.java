@@ -27,6 +27,13 @@ public class UserController {
         return respondSuccessList(service.getUsers());
     }
 
+    @GetMapping("/users/{id}")
+    public ResponseEntity<User> getById(@PathVariable int id) {
+        log.info("Получить пользователя по ID - {}", id);
+
+        return respondSuccess(service.getById(id));
+    }
+
     @GetMapping("/users/{id}/friends")
     public ResponseEntity<?> getFriends(@PathVariable("id") Integer id) {
         return respondSuccessList(service.getFriends(id));

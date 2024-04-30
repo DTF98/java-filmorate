@@ -35,13 +35,27 @@ public class FilmDbStorage implements FilmStorage {
     public List<Film> get() {
         try {
             return jdbcTemplate.query("SELECT id, NAME, DESCRIPTION, DURATION, RELEASE_DATE, " +
-                    "array_agg(GENRE), MPA, MPA_ID, array_agg(GENRE_ID) FROM films AS f JOIN (SELECT FILM_ID, " +
+                    "array_agg(GENRE), MPA, MPA_ID, array_agg(GENRE_ID) FROM films AS f LEFT JOIN (SELECT FILM_ID, " +
                     "GENRE, fg.GENRE_ID FROM film_genres as fg JOIN genres AS g ON g.genre_id = fg.genre_id) AS" +
-                    " G ON f.ID = G.film_id JOIN (SELECT FILM_ID , MPA, fm.MPA_ID FROM FILM_MPA as fm JOIN MPA AS" +
+                    " G ON f.ID = G.film_id LEFT JOIN (SELECT FILM_ID , MPA, fm.MPA_ID FROM FILM_MPA as fm JOIN MPA AS" +
                     " m ON m.mpa_id = fm.mpa_id) AS M ON f.ID = M.film_id GROUP BY id;", this::mapRowToFilm);
         } catch (DataAccessException e) {
             log.error("Ошибка при получении списка всех фильмов", e);
             return null;
+        }
+    }
+
+    public Optional<Film> getById(Integer id) {
+        try {
+            return Optional.ofNullable(jdbcTemplate.queryForObject("SELECT id, NAME, DESCRIPTION, DURATION, RELEASE_DATE, " +
+                            "array_agg(GENRE), MPA, MPA_ID, array_agg(GENRE_ID) FROM films AS f LEFT JOIN (SELECT FILM_ID, " +
+                            "GENRE, fg.GENRE_ID FROM film_genres as fg JOIN genres AS g ON g.genre_id = fg.genre_id) AS" +
+                            " G ON f.ID = G.film_id LEFT JOIN (SELECT FILM_ID , MPA, fm.MPA_ID FROM FILM_MPA as fm JOIN MPA AS" +
+                            " m ON m.mpa_id = fm.mpa_i" +
+                            "d) AS M ON f.ID = M.film_id where id = ? GROUP BY id;",
+                    this::mapRowToFilm, id));
+        } catch (Exception e) {
+            throw new NotFoundException(String.format("Фильм по id = %s не найден!", id));
         }
     }
 
@@ -76,9 +90,12 @@ public class FilmDbStorage implements FilmStorage {
         try {
             String sqlFilms = "UPDATE films SET name = ?, description = ?, release_Date = ?, " +
                     "duration = ? WHERE id = ?;";
+
             if (jdbcTemplate.update(sqlFilms, film.getName(), film.getDescription(), film.getReleaseDate(),
                     film.getDuration(), film.getId()) > 0) {
+
                 updateFilmGenresLinks(film);
+
                 if (film.getMpa().getId() != null) {
                     String sql = "UPDATE film_mpa SET mpa_id = ? WHERE film_id = ?;";
                     jdbcTemplate.update(sql, film.getMpa().getId(), film.getId());
@@ -92,28 +109,14 @@ public class FilmDbStorage implements FilmStorage {
         }
     }
 
-    public Optional<Film> getById(Integer id) {
-        try {
-            return Optional.ofNullable(jdbcTemplate.queryForObject("SELECT id, NAME, DESCRIPTION, DURATION, RELEASE_DATE, " +
-                            "array_agg(GENRE), MPA, MPA_ID, array_agg(GENRE_ID) FROM films AS f LEFT JOIN (SELECT FILM_ID, " +
-                            "GENRE, fg.GENRE_ID FROM film_genres as fg JOIN genres AS g ON g.genre_id = fg.genre_id) AS" +
-                            " G ON f.ID = G.film_id JOIN (SELECT FILM_ID , MPA, fm.MPA_ID FROM FILM_MPA as fm JOIN MPA AS" +
-                            " m ON m.mpa_id = fm.mpa_i" +
-                            "d) AS M ON f.ID = M.film_id where id = ? GROUP BY id;",
-                    this::mapRowToFilm, id));
-        } catch (DataAccessException e) {
-            throw new NotFoundException(String.format("Фильм по id = %s не найден!", id));
-        }
-    }
-
     public List<Film> getMostPopularFilms(Integer count) {
         if (count > 0) {
             try {
                 return jdbcTemplate.query(String.format("SELECT id, NAME, DESCRIPTION, DURATION, RELEASE_DATE," +
-                                " array_agg(GENRE), MPA, likes, MPA_ID, array_agg(GENRE_ID) FROM films AS f JOIN (SELECT FILM_ID," +
+                                " array_agg(GENRE), MPA, likes, MPA_ID, array_agg(GENRE_ID) FROM films AS f LEFT JOIN (SELECT FILM_ID," +
                                 " GENRE, fg.GENRE_ID FROM film_genres as fg JOIN genres AS g ON g.genre_id = fg.genre_id) AS" +
-                                " G ON f.ID = G.film_id JOIN (SELECT FILM_ID , MPA, fm.MPA_ID FROM FILM_MPA as fm JOIN MPA AS" +
-                                " m ON m.mpa_id = fm.mpa_id) AS M ON f.ID = M.film_id JOIN (SELECT FILM_ID, COUNT(USER_ID) AS" +
+                                " G ON f.ID = G.film_id LEFT JOIN (SELECT FILM_ID , MPA, fm.MPA_ID FROM FILM_MPA as fm JOIN MPA AS" +
+                                " m ON m.mpa_id = fm.mpa_id) AS M ON f.ID = M.film_id LEFT JOIN (SELECT FILM_ID, COUNT(USER_ID) AS" +
                                 " likes FROM FILM_LIKES GROUP BY FILM_ID) AS fl ON f.ID = FL.FILM_ID GROUP BY id ORDER BY LIKES DESC" +
                                 " LIMIT %s;", count),
                         this::mapRowToFilm);
@@ -165,63 +168,83 @@ public class FilmDbStorage implements FilmStorage {
     }
 
     private void updateFilmGenresLinks(Film film) {
-        if (film.getGenres().isEmpty()) {
-            return;
-        }
-        removeFilmGenresLinks(film.getId());
-        String sqlQuery = "INSERT INTO FILM_GENRES (FILM_ID, GENRE_ID) " +
-                "VALUES (?, ?)";
-        Set<Genre> genres = new TreeSet<>(Comparator.comparingInt(Genre::getId));
-        genres.addAll(film.getGenres());
-        jdbcTemplate.batchUpdate(sqlQuery, new BatchPreparedStatementSetter() {
-            @Override
-            public void setValues(PreparedStatement ps, int i) throws SQLException {
-                Genre genre = new ArrayList<>(genres).get(i);
-                ps.setLong(1, film.getId());
-                ps.setLong(2, genre.getId());
-            }
+        try {
+            removeFilmGenresLinks(film.getId());
 
-            @Override
-            public int getBatchSize() {
-                return genres.size();
-            }
-        });
+            String sqlQuery = "INSERT INTO FILM_GENRES (FILM_ID, GENRE_ID) " +
+                    "VALUES (?, ?)";
+
+            Set<Genre> genres = new TreeSet<>(Comparator.comparingInt(Genre::getId));
+
+            genres.addAll(film.getGenres());
+
+            jdbcTemplate.batchUpdate(sqlQuery, new BatchPreparedStatementSetter() {
+                @Override
+                public void setValues(PreparedStatement ps, int i) throws SQLException {
+                    Genre genre = new ArrayList<>(genres).get(i);
+                    ps.setLong(1, film.getId());
+                    ps.setLong(2, genre.getId());
+                }
+
+                @Override
+                public int getBatchSize() {
+                    return genres.size();
+                }
+            });
+        } catch (DataAccessException e) {
+            log.error("Error in updateFilmGenresLinks", e);
+        }
     }
 
     private void removeFilmGenresLinks(Integer filmId) {
-        String sqlQuery = "DELETE FROM FILM_GENRES " +
-                "WHERE FILM_ID = ?";
-        jdbcTemplate.update(sqlQuery, filmId);
+        try {
+            String sqlQuery = "DELETE FROM FILM_GENRES " +
+                    "WHERE FILM_ID = ?";
+            jdbcTemplate.update(sqlQuery, filmId);
+        } catch (DataAccessException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private Film mapRowToFilm(ResultSet resultSet, int rowNum) throws SQLException {
-        Set<Genre> newGenres = new TreeSet<>(Comparator.comparing(Genre::getId));
-        List<Integer> id = Arrays.stream(
-                resultSet.getString("ARRAY_AGG(GENRE_ID)")
-                .replaceAll("[\\[\\]\\\\ ]", "")
-                .split(","))
-                .filter(elem -> !elem.equals("null"))
-                .map(Integer::parseInt)
-                .collect(Collectors.toList()
-                );
-        List<String> name = Arrays.stream(
-                resultSet.getString("ARRAY_AGG(GENRE)")
-                .replaceAll("[\\[\\]\\\\ ]", "")
-                .split(","))
-                .filter(elem -> !elem.equals("null"))
-                .collect(Collectors.toList()
-                );
-        for (int i = 0; i < id.size(); i++) {
-            newGenres.add(new Genre(id.get(i), name.get(i)));
+        Set<Genre> newGenres;
+        List<Integer> id;
+        List<String> name;
+        try {
+            newGenres = new TreeSet<>(Comparator.comparing(Genre::getId));
+            id = Arrays.stream(
+                            resultSet.getString("ARRAY_AGG(GENRE_ID)")
+                                    .replaceAll("[\\[\\]\\\\ ]", "")
+                                    .split(","))
+                    .filter(elem -> !elem.equals("null"))
+                    .map(Integer::parseInt)
+                    .collect(Collectors.toList()
+                    );
+            name = Arrays.stream(
+                            resultSet.getString("ARRAY_AGG(GENRE)")
+                                    .replaceAll("[\\[\\]\\\\ ]", "")
+                                    .split(","))
+                    .filter(elem -> !elem.equals("null"))
+                    .collect(Collectors.toList()
+                    );
+
+            for (int i = 0; i < id.size(); i++) {
+                newGenres.add(new Genre(id.get(i), name.get(i)));
+            }
+
+            return Film.builder()
+                    .id(resultSet.getInt("id"))
+                    .name(resultSet.getString("name"))
+                    .description(resultSet.getString("description"))
+                    .releaseDate(LocalDate.parse(resultSet.getString("release_date")))
+                    .duration(resultSet.getInt("duration"))
+                    .genres(newGenres)
+                    .mpa(new MPA(resultSet.getInt("mpa_id"), resultSet.getString("mpa")))
+                    .build();
+        } catch (Exception e) {
+            log.error("Error in mapRowToFilm", e);
         }
-        return Film.builder()
-                .id(resultSet.getInt("id"))
-                .name(resultSet.getString("name"))
-                .description(resultSet.getString("description"))
-                .releaseDate(LocalDate.parse(resultSet.getString("release_date")))
-                .duration(resultSet.getInt("duration"))
-                .genres(newGenres)
-                .mpa(new MPA(resultSet.getInt("mpa_id"), resultSet.getString("mpa")))
-                .build();
+
+        return null;
     }
 }

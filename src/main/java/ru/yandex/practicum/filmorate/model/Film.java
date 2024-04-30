@@ -15,10 +15,10 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Positive;
 import javax.validation.constraints.Size;
 import java.time.LocalDate;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
+@Builder
 @Getter
 @Setter
 @ToString
@@ -37,12 +37,12 @@ public class Film {
     @NotNull
     @NonFinal
     @ValidateGenre("Номер жанра не должен быть больше 6 и меньше 1")
-    private Set<Genre> genres;
+    @Builder.Default
+    private Set<Genre> genres = new LinkedHashSet<>();;
     @ValidateMPA("Номер рейтинга не должен быть больше 5 и меньше 1")
     private MPA mpa;
 
-    @Builder
-    @Jacksonized
+
     public Film(Integer id, String name, String description, LocalDate releaseDate, Integer duration, Set<Genre> genres,
                 MPA mpa) {
         this.id = id;
@@ -50,7 +50,13 @@ public class Film {
         this.description = description;
         this.releaseDate = releaseDate;
         this.duration = duration;
-        this.genres = Objects.requireNonNullElseGet(genres, HashSet::new);
+        if (genres != null) { // Сортировка при присвоении, не проходят тесты без сортировки
+            this.genres = genres.stream()
+                    .sorted(Comparator.comparingInt(Genre::getId))
+                    .collect(Collectors.toCollection(LinkedHashSet::new));
+        } else {
+            this.genres = new LinkedHashSet<>();
+        }
         this.mpa = mpa;
     }
 }
