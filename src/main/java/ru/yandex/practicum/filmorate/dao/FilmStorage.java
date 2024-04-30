@@ -9,6 +9,8 @@ public interface FilmStorage extends Storage<Film> {
 
     public Integer removeLike(Integer filmID, Integer userID);
 
+    boolean removeFilm(long id);
+
     public List<Integer> getLikes(Integer filmID);
 
     public List<Film> getMostPopularFilms(Integer count);

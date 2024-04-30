@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.dao.UserStorage;
 import ru.yandex.practicum.filmorate.exception.IntersectionException;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.util.ArrayList;
@@ -57,6 +58,15 @@ public class UserService {
         User newUser = storage.update(user);
         log.info(String.format("Обновлён пользователь: {%s}", newUser));
         return newUser;
+    }
+    public void removeUser (Integer userID) {
+        log.info("Удаление юзера id = {}", userID);
+        boolean delUser = storage.removeUser(userID);
+        if (delUser) {
+            log.info("Удален юзера id = {}", userID);
+        }else {
+            throw new NotFoundException("Не найдено по ИД");
+        }
     }
 
     public User getUserById(Integer id) {

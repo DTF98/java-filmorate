@@ -115,6 +115,12 @@ public class UserDbStorage implements UserStorage {
             throw new NotFoundException("Не найден пользователь!");
         }
     }
+    @Override
+    public boolean removeUser(long id) {
+
+        String sqlQuery = "DELETE FROM users WHERE ID= ?";
+        return jdbcTemplate.update(sqlQuery, id) > 0;
+    }
 
     public List<User> getFriends(Integer userId) {
         if (isExistById(userId)) {

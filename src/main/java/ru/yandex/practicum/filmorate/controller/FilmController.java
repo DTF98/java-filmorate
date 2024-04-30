@@ -2,6 +2,7 @@ package ru.yandex.practicum.filmorate.controller;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.Film;
@@ -38,7 +39,12 @@ public class FilmController {
     public ResponseEntity<?> deleteLike(@PathVariable("id") Integer id, @PathVariable("userId") Integer userId) {
         return respondSuccess(service.removeLike(userId, id));
     }
-
+    ///films/{filmId}
+    @DeleteMapping("/{filmId}")
+    public ResponseEntity<?> removeFilm(@PathVariable("filmId") Integer id) {
+        service.removeFilm(id);
+        return respondSuccess(HttpStatus.OK);
+    }
     @PostMapping
     public ResponseEntity<?> create(@Valid @RequestBody Film film) {
         return respondSuccess(service.addFilm(film));
