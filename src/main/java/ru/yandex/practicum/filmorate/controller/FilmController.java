@@ -35,7 +35,7 @@ public class FilmController {
 
     @DeleteMapping("/{id}/like/{userId}")
     public ResponseEntity<?> deleteLike(@PathVariable("id") Integer id, @PathVariable("userId") Integer userId) {
-        return respondSuccess(service.deleteLike(userId, id));
+         return respondSuccess(service.deleteLike(userId, id));
     }
 
     @DeleteMapping("/{filmId}")
