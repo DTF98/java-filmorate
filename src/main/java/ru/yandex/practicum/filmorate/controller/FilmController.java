@@ -65,5 +65,16 @@ public class FilmController {
     public ResponseEntity<?> getFilm(@PathVariable Integer id) {
         return respondSuccess(service.getFilmById(id));
     }
+
+    @GetMapping("/director/{directorId}")
+    public void getDirector(@PathVariable Integer directorId, @RequestParam String sortBy) {
+        //ResponseEntity<?>
+        Integer a = directorId;
+        if(sortBy.equals("likes")) {
+            System.out.println("ЛайкИИИИИИИИ");
+        } else if (sortBy.equals("year")) {
+            System.out.println("ГооооооооД");
+        }
+    }
 }
 
