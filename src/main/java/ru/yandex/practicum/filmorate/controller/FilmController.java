@@ -36,7 +36,7 @@ public class FilmController {
 
     @DeleteMapping("/{id}/like/{userId}")
     public ResponseEntity<?> deleteLike(@PathVariable("id") Integer id, @PathVariable("userId") Integer userId) {
-        return respondSuccess(service.removeLike(userId, id));
+         return respondSuccess(service.removeLike(userId, id));
     }
 
     @PostMapping
