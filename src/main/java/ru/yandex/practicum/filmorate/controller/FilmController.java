@@ -37,13 +37,12 @@ public class FilmController {
 
     @DeleteMapping("/{id}/like/{userId}")
     public ResponseEntity<?> deleteLike(@PathVariable("id") Integer id, @PathVariable("userId") Integer userId) {
-        return respondSuccess(service.deleteLike(userId, id));
+         return respondSuccess(service.deleteLike(userId, id));
     }
 
     @DeleteMapping("/{filmId}")
     public ResponseEntity<?> deleteFilm(@PathVariable("filmId") Integer id) {
-        service.deleteFilm(id);
-        return respondSuccess(HttpStatus.OK);
+        return respondSuccess(service.deleteFilm(id));
     }
 
     @PostMapping
