@@ -11,6 +11,9 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
+/**
+ * Отзыв к фильму
+ */
 @Data
 @Builder
 @Jacksonized
@@ -35,6 +38,8 @@ public class Review {
     @Builder.Default
     private Integer useful = 0;
 
-    private boolean isPositive;
+    @JsonProperty("isPositive")
+    @NotNull
+    private Boolean isPositive;
 
 }

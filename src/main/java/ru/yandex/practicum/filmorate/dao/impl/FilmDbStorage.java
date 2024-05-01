@@ -206,7 +206,7 @@ public class FilmDbStorage implements FilmStorage {
         }
     }
 
-    private Film mapRowToFilm(ResultSet resultSet, int rowNum) throws SQLException {
+    private Film mapRowToFilm(ResultSet resultSet, int rowNum) {
         Set<Genre> newGenres;
         List<Integer> id;
         List<String> name;

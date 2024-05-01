@@ -46,7 +46,7 @@ public class ReviewDbStorageImpl implements ReviewStorage {
 
             jdbcTemplate.update(sqlQuery,
                     review.getContent(),
-                    review.isPositive(),
+                    review.getIsPositive(),
                     review.getId());
         } catch (DataAccessException e) {
             log.error("Error in update review", e);
@@ -56,8 +56,50 @@ public class ReviewDbStorageImpl implements ReviewStorage {
     }
 
     @Override
+    public long delete(long id) {
+        try {
+            String sqlQuery = "delete from REVIEW where ID = ?;";
+            boolean isSuccess = jdbcTemplate.update(sqlQuery, id) > 0;
+        } catch (DataAccessException e) {
+            log.error("Error in delete review", e);
+        }
+
+        return id;
+    }
+
+    @Override
+    public void increaseUseful(long id) {
+        try {
+            String sqlQuery = "update REVIEW set " +
+                    " USEFUL = (USEFUL + 1)" +
+                    " where ID = ?";
+
+            jdbcTemplate.update(sqlQuery, id);
+        } catch (DataAccessException e) {
+            log.error("Error in increaseUseful", e);
+        }
+
+    }
+
+    @Override
+    public void decreaseUseful(long id) {
+        try {
+            String sqlQuery = "update REVIEW set " +
+                    " USEFUL = (USEFUL - 1)" +
+                    " where ID = ?";
+
+            jdbcTemplate.update(sqlQuery, id);
+        } catch (DataAccessException e) {
+            log.error("Error in decreaseUseful", e);
+        }
+
+    }
+
+    @Override
     public Collection<Review> getAll() {
-        String sql = "SELECT id, film_id, user_id, content, useful, is_positive FROM REVIEW ORDER BY USEFUL";
+        String sql = "SELECT id, film_id, user_id, content, useful, is_positive" +
+                " FROM REVIEW " +
+                " ORDER BY USEFUL DESC";
         Collection<Review> reviews = new ArrayList<>();
 
         try {
@@ -73,7 +115,7 @@ public class ReviewDbStorageImpl implements ReviewStorage {
     public Optional<Review> getById(long id) {
         try {
             String sqlQuery = "SELECT id, film_id, user_id, content, useful, is_positive " +
-                    "FROM REVIEW WHERE id = ?";
+                    " FROM REVIEW WHERE id = ?";
 
             return Optional.ofNullable(jdbcTemplate.queryForObject(sqlQuery, this::mapRow, id));
         } catch (DataAccessException e) {
@@ -83,7 +125,25 @@ public class ReviewDbStorageImpl implements ReviewStorage {
         return Optional.empty();
     }
 
-    private Review mapRow(ResultSet resultSet, int rowNum) throws SQLException {
+    @Override
+    public Collection<Review> getByFilmId(long filmId) {
+        String sql = "SELECT id, film_id, user_id, content, useful, is_positive" +
+                " FROM REVIEW" +
+                " WHERE FILM_ID = ?" +
+                " ORDER BY USEFUL DESC";
+
+        Collection<Review> reviews = new ArrayList<>();
+
+        try {
+            reviews = jdbcTemplate.query(sql, this::mapRow, filmId);
+        } catch (DataAccessException e) {
+            log.error("Error in getByFilmId", e);
+        }
+
+        return reviews;
+    }
+
+    private Review mapRow(ResultSet resultSet, int rowNum) {
         try {
             return Review.builder()
                     .id(resultSet.getLong("id"))
@@ -100,14 +160,14 @@ public class ReviewDbStorageImpl implements ReviewStorage {
     }
 
     public Map<String, Object> toReviewMap(Review review) {
-        Map<String, Object> values = null;
+        Map<String, Object> values;
         try {
             values = new HashMap<>();
             values.put("film_id", review.getFilmId());
             values.put("user_id", review.getUserId());
             values.put("content", review.getContent());
             values.put("useful", review.getUseful());
-            values.put("is_positive", review.isPositive());
+            values.put("is_positive", review.getIsPositive());
         } catch (Exception e) {
             log.error("Error in toReviewMap ", e);
             return new HashMap<>();

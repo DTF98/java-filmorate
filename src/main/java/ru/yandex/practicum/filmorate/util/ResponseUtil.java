@@ -19,4 +19,10 @@ public class ResponseUtil {
                 .body(body);
     }
 
+    public static <T> ResponseEntity<T> respondSuccess() {
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .build();
+    }
+
 }
