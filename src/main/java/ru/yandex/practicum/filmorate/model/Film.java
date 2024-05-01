@@ -22,26 +22,31 @@ import java.util.stream.Collectors;
 @Setter
 @ToString
 public class Film {
+
     private Integer id;
+
     @NotBlank
     private String name;
+
     @Size(max = 200, message = "максимальная длина описания — 200 символов")
     private String description;
+
     @NotNull
     @ValidateDate(message = "28.12.1895")
     private LocalDate releaseDate;
+
     @NotNull
     @Positive
     private Integer duration;
+
     @NotNull
     @NonFinal
     @ValidateGenre("Номер жанра не должен быть больше 6 и меньше 1")
     @Builder.Default
     private Set<Genre> genres = new LinkedHashSet<>();
-    ;
+
     @ValidateMPA("Номер рейтинга не должен быть больше 5 и меньше 1")
     private MPA mpa;
-
 
     public Film(Integer id, String name, String description, LocalDate releaseDate, Integer duration, Set<Genre> genres,
                 MPA mpa) {
@@ -59,4 +64,5 @@ public class Film {
         }
         this.mpa = mpa;
     }
+
 }
