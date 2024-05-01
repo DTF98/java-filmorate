@@ -75,7 +75,7 @@ public class FilmDbStorageTest {
                 .usingRecursiveComparison()
                 .isEqualTo(stepan.getId());
 
-        filmStorage.removeLike(newFilm.getId(), stepan.getId());
+        filmStorage.deleteLike(newFilm.getId(), stepan.getId());
         List<Integer> likes0 = filmStorage.getLikes(newFilm.getId());
         assertEquals(0, likes0.size());
     }

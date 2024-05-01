@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.dao.FilmStorage;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 
 import java.util.ArrayList;
@@ -23,9 +24,19 @@ public class FilmService {
         return film;
     }
 
-    public Integer removeLike(Integer userID, Integer filmID) {
+    public Integer deleteLike(Integer userID, Integer filmID) {
         log.info("Удаление лайка у фильма id = {}, пользователем id = {}", filmID, userID);
-        return filmStorage.removeLike(filmID, userID);
+        return filmStorage.deleteLike(filmID, userID);
+    }
+
+    public void deleteFilm(Integer filmID) {
+        log.info("Удаление фильма id = {}", filmID);
+        boolean delFilm = filmStorage.delete(filmID);
+        if (delFilm) {
+            log.info("Удален фильма id = {}", filmID);
+        } else {
+            throw new NotFoundException("Не найдено по ИД");
+        }
     }
 
     public List<Film> search10MostPopularFilms(Integer count) {

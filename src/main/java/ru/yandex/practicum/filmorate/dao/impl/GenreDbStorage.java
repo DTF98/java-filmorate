@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.dao.GenreStorage;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Genre;
 
 import java.sql.ResultSet;
@@ -38,6 +39,16 @@ public class GenreDbStorage implements GenreStorage {
         String sql = "UPDATE genres SET name = ? WHERE id = ?;";
         jdbcTemplate.update(sql, item.getName(), item.getId());
         return item;
+    }
+
+
+    public boolean delete(Integer id) {
+        if (id > 0 && id < 7) {
+            String sql = "DELETE FROM genres WHERE genre_id = ?;";
+            return jdbcTemplate.update(sql, id) > 0;
+        } else {
+            throw new NotFoundException(String.format("Жанр по id = %s не найден!", id));
+        }
     }
 
     private Genre mapRowToGenre(ResultSet resultSet, int rowNum) throws SQLException {

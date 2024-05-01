@@ -2,6 +2,7 @@ package ru.yandex.practicum.filmorate.controller;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.User;
@@ -40,8 +41,8 @@ public class UserController {
 
     @DeleteMapping("/users/{id}/friends/{friendId}")
     public ResponseEntity<?> deleteFriend(@PathVariable("id") Integer id,
-                                 @PathVariable("friendId") Integer friendId) {
-        return respondSuccess(service.removeFriend(id, friendId));
+                                          @PathVariable("friendId") Integer friendId) {
+        return respondSuccess(service.deleteFriend(id, friendId));
     }
 
     @PostMapping(value = "/users")
@@ -58,5 +59,16 @@ public class UserController {
     public ResponseEntity<?> addFriend(@PathVariable("id") Integer id,
                                        @PathVariable("friendId") Integer friendId) {
         return respondSuccess(service.addToFriends(id, friendId));
+    }
+
+    @DeleteMapping("/users/{id}")
+    public ResponseEntity<?> deleteUser(@PathVariable Integer id) {
+        service.deleteUser(id);
+        return respondSuccess(HttpStatus.OK);
+    }
+
+    @GetMapping("/users/{id}")
+    public ResponseEntity<?> getUser(@PathVariable Integer id) {
+        return respondSuccess(service.getUserById(id));
     }
 }
