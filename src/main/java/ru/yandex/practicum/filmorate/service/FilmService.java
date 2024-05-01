@@ -34,7 +34,7 @@ public class FilmService {
         boolean delFilm = filmStorage.delete(filmID);
         if (delFilm) {
             log.info("Удален фильма id = {}", filmID);
-        }else {
+        } else {
             throw new NotFoundException("Не найдено по ИД");
         }
     }
