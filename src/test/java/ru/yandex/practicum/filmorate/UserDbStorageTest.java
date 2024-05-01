@@ -59,7 +59,7 @@ public class UserDbStorageTest {
                 .usingRecursiveComparison()
                 .isEqualTo(newUser2);
 
-        storage.removeFriend(newUser1.getId(),newUser2.getId());
+        storage.deleteFriend(newUser1.getId(),newUser2.getId());
 
         List<User> friends0 = storage.getFriends(newUser1.getId());
         assertEquals(0, friends0.size());

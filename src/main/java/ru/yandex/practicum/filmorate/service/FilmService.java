@@ -24,14 +24,14 @@ public class FilmService {
         return film;
     }
 
-    public Integer removeLike(Integer userID, Integer filmID) {
+    public Integer deleteLike(Integer userID, Integer filmID) {
         log.info("Удаление лайка у фильма id = {}, пользователем id = {}", filmID, userID);
-        return filmStorage.removeLike(filmID, userID);
+        return filmStorage.deleteLike(filmID, userID);
     }
 
-    public void removeFilm (Integer filmID) {
+    public void deleteFilm(Integer filmID) {
         log.info("Удаление фильма id = {}", filmID);
-        boolean delFilm = filmStorage.removeFilm(filmID);
+        boolean delFilm = filmStorage.delete(filmID);
         if (delFilm) {
             log.info("Удален фильма id = {}", filmID);
         }else {

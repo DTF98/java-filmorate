@@ -41,8 +41,8 @@ public class UserController {
 
     @DeleteMapping("/users/{id}/friends/{friendId}")
     public ResponseEntity<?> deleteFriend(@PathVariable("id") Integer id,
-                                 @PathVariable("friendId") Integer friendId) {
-        return respondSuccess(service.removeFriend(id, friendId));
+                                          @PathVariable("friendId") Integer friendId) {
+        return respondSuccess(service.deleteFriend(id, friendId));
     }
 
     @PostMapping(value = "/users")
@@ -60,10 +60,15 @@ public class UserController {
                                        @PathVariable("friendId") Integer friendId) {
         return respondSuccess(service.addToFriends(id, friendId));
     }
-    //removeUser
-    @DeleteMapping("/{removeUser}")
-    public ResponseEntity<?> removeFilm(@PathVariable("removeUser") Integer id) {
-        service.removeUser(id);
+
+    @DeleteMapping("/users/{id}")
+    public ResponseEntity<?> deleteUser(@PathVariable Integer id) {
+        service.deleteUser(id);
         return respondSuccess(HttpStatus.OK);
+    }
+
+    @GetMapping("/users/{id}")
+    public ResponseEntity<?> getUser(@PathVariable Integer id) {
+        return respondSuccess(service.getUserById(id));
     }
 }

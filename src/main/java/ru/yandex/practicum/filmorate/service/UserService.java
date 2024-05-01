@@ -4,7 +4,6 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.dao.UserStorage;
-import ru.yandex.practicum.filmorate.exception.IntersectionException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
 
@@ -23,9 +22,9 @@ public class UserService {
         return storage.addFriend(userId, friendId);
     }
 
-    public Integer removeFriend(Integer userId, Integer friendId) {
+    public Integer deleteFriend(Integer userId, Integer friendId) {
         log.info("Удаление из друзей userId={}, friendId={}", userId, friendId);
-        return storage.removeFriend(userId, friendId);
+        return storage.deleteFriend(userId, friendId);
     }
 
     public List<User> getFriends(Integer id) {
@@ -36,11 +35,13 @@ public class UserService {
     public List<User> searchForCommonFriends(Integer id1, Integer id2) {
         List<User> friends1 = storage.getFriends(id1);
         List<User> friends2 = storage.getFriends(id2);
-        if (friends1.retainAll(friends2)) {
+        friends1.retainAll(friends2);
+        if (!friends1.isEmpty()) {
             log.info("Получен список общих друзей: {}", friends1);
             return friends1;
         } else {
-            throw new IntersectionException("Общих друзей не найдено!");
+            log.info("Общие друзья не найдены!");
+            return new ArrayList<>();
         }
     }
 
@@ -59,12 +60,13 @@ public class UserService {
         log.info(String.format("Обновлён пользователь: {%s}", newUser));
         return newUser;
     }
-    public void removeUser (Integer userID) {
+
+    public void deleteUser(Integer userID) {
         log.info("Удаление юзера id = {}", userID);
-        boolean delUser = storage.removeUser(userID);
+        boolean delUser = storage.delete(userID);
         if (delUser) {
             log.info("Удален юзера id = {}", userID);
-        }else {
+        } else {
             throw new NotFoundException("Не найдено по ИД");
         }
     }
