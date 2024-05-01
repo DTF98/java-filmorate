@@ -9,6 +9,7 @@ import ru.yandex.practicum.filmorate.model.User;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @Slf4j
@@ -21,9 +22,9 @@ public class UserService {
         return storage.addFriend(userId, friendId);
     }
 
-    public Integer removeFriend(Integer userId, Integer friendId) {
+    public Integer deleteFriend(Integer userId, Integer friendId) {
         log.info("Удаление из друзей userId={}, friendId={}", userId, friendId);
-        return storage.removeFriend(userId, friendId);
+        return storage.deleteFriend(userId, friendId);
     }
 
     public List<User> getFriends(Integer id) {
@@ -60,11 +61,23 @@ public class UserService {
         return newUser;
     }
 
-    public User getById(Integer id) {
-        return storage.getById(id).orElseThrow(() -> {
-            String errorText = "Пользователь с таким Id не найден: " + id;
-            log.error(errorText);
-            return new NotFoundException(errorText);
-        });
+    public void deleteUser(Integer userID) {
+        log.info("Удаление юзера id = {}", userID);
+        boolean delUser = storage.delete(userID);
+        if (delUser) {
+            log.info("Удален юзера id = {}", userID);
+        } else {
+            throw new NotFoundException("Не найдено по ИД");
+        }
+    }
+
+    public User getUserById(Integer id) {
+        Optional<User> user = storage.getById(id);
+        if (user.isPresent()) {
+            log.info(String.format("Получен пользователь : %s", id));
+            return user.get();
+        } else {
+            return null;
+        }
     }
 }

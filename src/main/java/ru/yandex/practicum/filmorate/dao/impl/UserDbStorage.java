@@ -97,7 +97,7 @@ public class UserDbStorage implements UserStorage {
         }
     }
 
-    public Integer removeFriend(Integer user, Integer friend) {
+    public Integer deleteFriend(Integer user, Integer friend) {
         if (isExistById(user) && isExistById(friend)) {
             try {
                 int updated = jdbcTemplate.update("DELETE FROM USER_FRIENDS WHERE user_id = ? AND friend_id = ?",
@@ -114,6 +114,21 @@ public class UserDbStorage implements UserStorage {
         } else {
             throw new NotFoundException("Не найден пользователь!");
         }
+    }
+
+    public boolean delete(Integer id) {
+        String sqlQuery = "DELETE FROM users WHERE ID= ?";
+        deleteFriendsLinks(id);
+        deleteLikesLinks(id);
+        return jdbcTemplate.update(sqlQuery, id) > 0;
+    }
+
+    public void deleteFriendsLinks(Integer userId) {
+        jdbcTemplate.update("DELETE FROM USER_FRIENDS WHERE user_id = ? OR friend_id = ?", userId, userId);
+    }
+
+    public void deleteLikesLinks(Integer userId) {
+        jdbcTemplate.update("DELETE FROM FILM_LIKES WHERE user_id = ?", userId);
     }
 
     public List<User> getFriends(Integer userId) {

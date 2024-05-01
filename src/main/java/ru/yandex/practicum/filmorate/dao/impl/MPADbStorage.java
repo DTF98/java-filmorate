@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.dao.MPAStorage;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.MPA;
 
 import java.sql.ResultSet;
@@ -38,6 +39,15 @@ public class MPADbStorage implements MPAStorage {
         String sql = "UPDATE mpa SET name = ? WHERE id = ?;";
         jdbcTemplate.update(sql, mpa.getName(), mpa.getId());
         return mpa;
+    }
+
+    public boolean delete(Integer id) {
+        if (id > 0 && id < 6) {
+            String sql = "DELETE FROM mpa WHERE mpa_id = ?;";
+            return jdbcTemplate.update(sql, id) > 0;
+        } else {
+            throw new NotFoundException(String.format("Рейтинг не найден!", id));
+        }
     }
 
     private MPA mapRowToMPA(ResultSet resultSet, int rowNum) throws SQLException {

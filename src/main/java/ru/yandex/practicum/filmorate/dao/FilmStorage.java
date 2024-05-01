@@ -7,7 +7,7 @@ import java.util.List;
 public interface FilmStorage extends Storage<Film> {
     public Film addLike(Integer filmID, Integer userID);
 
-    public Integer removeLike(Integer filmID, Integer userID);
+    public Integer deleteLike(Integer filmID, Integer userID);
 
     public List<Integer> getLikes(Integer filmID);
 
