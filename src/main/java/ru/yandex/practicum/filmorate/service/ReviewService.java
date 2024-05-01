@@ -31,7 +31,7 @@ public class ReviewService {
 
     public Review add(Review review) {
         filmService.getById(review.getFilmId().intValue()); // если фильма нет, то метод пробросит ошибку
-        userService.getById(review.getUserId().intValue()); // если пользователя нет, то метод пробросит ошибку
+        userService.getUserById(review.getUserId().intValue()); // если пользователя нет, то метод пробросит ошибку
 
         return reviewStorage.add(review);
     }
@@ -107,7 +107,7 @@ public class ReviewService {
      * Поставить like отзыву
      */
     public void addLike(long id, long userId) {
-        userService.getById((int) userId); // если пользователя нету то метод сам пробросит ошибку
+        userService.getUserById((int) userId); // если пользователя нет, то метод сам пробросит ошибку
 
         reviewLikeStorage.addLike(id, userId); // добавляем лайк отзыву
 
@@ -118,7 +118,7 @@ public class ReviewService {
      * Поставить dislike отзыву
      */
     public void addDislike(long id, long userId) {
-        userService.getById((int) userId); // если пользователя нету то метод сам пробросит ошибку
+        userService.getUserById((int) userId); // если пользователя нет, то метод сам пробросит ошибку
 
         reviewLikeStorage.addDislike(id, userId); // добавляем дизлайк отзыву
 
@@ -129,28 +129,16 @@ public class ReviewService {
      * Уменьшить полезность отзыва
      */
     public void increaseUseful(long reviewId) {
-        Review review = getById(reviewId); // если отзыва нет, то метод пробросит ошибку
-
+        getById(reviewId); // если отзыва нет, то метод пробросит ошибку
         reviewStorage.increaseUseful(reviewId);
-
-        Review receivedReview = getById(reviewId);
-
-        log.info(review.getUseful() + " - " + receivedReview.getUseful());
-        System.out.println();
     }
 
     /**
      * Увеличить полезность отзыва
      */
     public void decreaseUseful(long reviewId) {
-        Review review = getById(reviewId); // если отзыва нет, то метод пробросит ошибку
-
+        getById(reviewId); // если отзыва нет, то метод пробросит ошибку
         reviewStorage.decreaseUseful(reviewId);
-
-        Review receivedReview = getById(reviewId);
-
-        log.info(review.getUseful() + " - " + receivedReview.getUseful());
-        System.out.println();
     }
 
 }

@@ -32,7 +32,7 @@ public class UserController {
     public ResponseEntity<User> getById(@PathVariable int id) {
         log.info("Получить пользователя по ID - {}", id);
 
-        return respondSuccess(service.getById(id));
+        return respondSuccess(service.getUserById(id));
     }
 
     @GetMapping("/users/{id}/friends")
@@ -74,8 +74,4 @@ public class UserController {
         return respondSuccess(HttpStatus.OK);
     }
 
-    @GetMapping("/users/{id}")
-    public ResponseEntity<?> getUser(@PathVariable Integer id) {
-        return respondSuccess(service.getUserById(id));
-    }
 }

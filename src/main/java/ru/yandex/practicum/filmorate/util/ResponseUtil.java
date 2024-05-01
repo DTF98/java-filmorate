@@ -7,6 +7,10 @@ import java.util.Collection;
 
 public class ResponseUtil {
 
+    private ResponseUtil() {
+        throw new IllegalStateException("Utility class");
+    }
+
     public static <T> ResponseEntity<T> respondSuccess(T body) {
         return ResponseEntity
                 .status(HttpStatus.OK)
