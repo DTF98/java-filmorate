@@ -185,8 +185,8 @@ public class FilmDbStorage implements FilmStorage {
             @Override
             public void setValues(PreparedStatement ps, int i) throws SQLException {
                 Genre genre = new ArrayList<>(genres).get(i);
-                ps.setLong(1, film.getId());
-                ps.setLong(2, genre.getId());
+                ps.setInt(1, film.getId());
+                ps.setInt(2, genre.getId());
             }
 
             @Override

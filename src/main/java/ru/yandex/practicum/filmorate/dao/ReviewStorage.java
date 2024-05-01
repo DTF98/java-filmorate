@@ -11,16 +11,16 @@ public interface ReviewStorage {
 
     Review update(Review review);
 
-    long delete(long id);
+    int delete(int id);
 
-    void increaseUseful(long reviewId);
+    void increaseUseful(int reviewId);
 
-    void decreaseUseful(long reviewId);
+    void decreaseUseful(int reviewId);
 
     Collection<Review> getAll();
 
-    Optional<Review> getById(long id);
+    Optional<Review> getById(int id);
 
-    Collection<Review> getByFilmId(long filmId);
+    Collection<Review> getByFilmId(int filmId);
 
 }

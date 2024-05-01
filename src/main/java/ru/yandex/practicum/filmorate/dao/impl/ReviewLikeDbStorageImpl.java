@@ -18,8 +18,8 @@ public class ReviewLikeDbStorageImpl implements ReviewLikeStorage {
     private final JdbcTemplate jdbcTemplate;
 
     @Override
-    public Long addLike(Long reviewId, Long userId) {
-        Long reviewLikeId = null;
+    public Integer addLike(Integer reviewId, Integer userId) {
+        Integer reviewLikeId = null;
         try {
 
             SimpleJdbcInsert simpleJdbcInsert = new SimpleJdbcInsert(jdbcTemplate)
@@ -28,7 +28,7 @@ public class ReviewLikeDbStorageImpl implements ReviewLikeStorage {
                     .usingColumns("review_id", "user_id", "like_type");
 
             reviewLikeId = simpleJdbcInsert.executeAndReturnKey(
-                    toReviewLikeMap(new ReviewLike(reviewId, userId, true))).longValue();
+                    toReviewLikeMap(new ReviewLike(reviewId, userId, true))).intValue();
 
         } catch (Exception e) {
             log.error("Error in addLike", e);
@@ -38,8 +38,8 @@ public class ReviewLikeDbStorageImpl implements ReviewLikeStorage {
     }
 
     @Override
-    public Long addDislike(Long reviewId, Long userId) {
-        Long reviewDislikeId = null;
+    public Integer addDislike(Integer reviewId, Integer userId) {
+        Integer reviewDislikeId = null;
         try {
 
             SimpleJdbcInsert simpleJdbcInsert = new SimpleJdbcInsert(jdbcTemplate)
@@ -48,7 +48,7 @@ public class ReviewLikeDbStorageImpl implements ReviewLikeStorage {
                     .usingColumns("review_id", "user_id", "like_type");
 
             reviewDislikeId = simpleJdbcInsert.executeAndReturnKey(
-                    toReviewLikeMap(new ReviewLike(reviewId, userId, true))).longValue();
+                    toReviewLikeMap(new ReviewLike(reviewId, userId, true))).intValue();
 
         } catch (Exception e) {
             log.error("Error in addDislike", e);
@@ -61,7 +61,7 @@ public class ReviewLikeDbStorageImpl implements ReviewLikeStorage {
      * Delete all review likes and dislikes
      */
     @Override
-    public void deleteLikes(Long reviewId) {
+    public void deleteLikes(Integer reviewId) {
         try {
             String sqlQuery = "DELETE FROM REVIEW_LIKE" +
                     " WHERE REVIEW_ID = ?;";
@@ -76,7 +76,7 @@ public class ReviewLikeDbStorageImpl implements ReviewLikeStorage {
      * Delete review like from user
      */
     @Override
-    public void deleteLike(Long reviewId, long userId) {
+    public void deleteLike(Integer reviewId, int userId) {
         try {
             String sqlQuery = "DELETE FROM REVIEW_LIKE" +
                     " WHERE REVIEW_ID = ? " +
@@ -92,7 +92,7 @@ public class ReviewLikeDbStorageImpl implements ReviewLikeStorage {
      * Delete review dislike from user
      */
     @Override
-    public void deleteDislike(Long reviewId, long userId) {
+    public void deleteDislike(Integer reviewId, int userId) {
         try {
             String sqlQuery = "DELETE FROM REVIEW_LIKE" +
                     " WHERE REVIEW_ID = ? " +

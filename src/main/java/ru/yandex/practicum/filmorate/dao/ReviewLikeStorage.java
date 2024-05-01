@@ -2,14 +2,14 @@ package ru.yandex.practicum.filmorate.dao;
 
 public interface ReviewLikeStorage {
 
-    Long addLike(Long reviewId, Long userId);
+    Integer addLike(Integer reviewId, Integer userId);
 
-    void deleteLikes(Long reviewId);
+    void deleteLikes(Integer reviewId);
 
-    Long addDislike(Long reviewId, Long userId);
+    Integer addDislike(Integer reviewId, Integer userId);
 
-    void deleteLike(Long reviewId, long userId);
+    void deleteLike(Integer reviewId, int userId);
 
-    void deleteDislike(Long reviewId, long userId);
+    void deleteDislike(Integer reviewId, int userId);
 
 }

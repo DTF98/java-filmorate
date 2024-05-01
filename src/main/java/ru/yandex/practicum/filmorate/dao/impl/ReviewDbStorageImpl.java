@@ -26,7 +26,7 @@ public class ReviewDbStorageImpl implements ReviewStorage {
             SimpleJdbcInsert simpleJdbcInsert = new SimpleJdbcInsert(jdbcTemplate)
                     .withTableName("review")
                     .usingGeneratedKeyColumns("id");
-            long reviewId = simpleJdbcInsert.executeAndReturnKey(toReviewMap(review)).longValue();
+            int reviewId = simpleJdbcInsert.executeAndReturnKey(toReviewMap(review)).intValue();
             review.setId(reviewId);
 
 
@@ -56,7 +56,7 @@ public class ReviewDbStorageImpl implements ReviewStorage {
     }
 
     @Override
-    public long delete(long id) {
+    public int delete(int id) {
         try {
             String sqlQuery = "delete from REVIEW where ID = ?;";
             boolean isSuccess = jdbcTemplate.update(sqlQuery, id) > 0;
@@ -68,7 +68,7 @@ public class ReviewDbStorageImpl implements ReviewStorage {
     }
 
     @Override
-    public void increaseUseful(long id) {
+    public void increaseUseful(int id) {
         try {
             String sqlQuery = "update REVIEW set " +
                     " USEFUL = (USEFUL + 1)" +
@@ -82,7 +82,7 @@ public class ReviewDbStorageImpl implements ReviewStorage {
     }
 
     @Override
-    public void decreaseUseful(long id) {
+    public void decreaseUseful(int id) {
         try {
             String sqlQuery = "update REVIEW set " +
                     " USEFUL = (USEFUL - 1)" +
@@ -112,7 +112,7 @@ public class ReviewDbStorageImpl implements ReviewStorage {
     }
 
     @Override
-    public Optional<Review> getById(long id) {
+    public Optional<Review> getById(int id) {
         try {
             String sqlQuery = "SELECT id, film_id, user_id, content, useful, is_positive " +
                     " FROM REVIEW WHERE id = ?";
@@ -126,7 +126,7 @@ public class ReviewDbStorageImpl implements ReviewStorage {
     }
 
     @Override
-    public Collection<Review> getByFilmId(long filmId) {
+    public Collection<Review> getByFilmId(int filmId) {
         String sql = "SELECT id, film_id, user_id, content, useful, is_positive" +
                 " FROM REVIEW" +
                 " WHERE FILM_ID = ?" +
@@ -146,9 +146,9 @@ public class ReviewDbStorageImpl implements ReviewStorage {
     private Review mapRow(ResultSet resultSet, int rowNum) {
         try {
             return Review.builder()
-                    .id(resultSet.getLong("id"))
-                    .filmId(resultSet.getLong("film_id"))
-                    .userId(resultSet.getLong("user_id"))
+                    .id(resultSet.getInt("id"))
+                    .filmId(resultSet.getInt("film_id"))
+                    .userId(resultSet.getInt("user_id"))
                     .content(resultSet.getString("content"))
                     .useful(resultSet.getInt("useful"))
                     .isPositive(resultSet.getBoolean("is_positive"))

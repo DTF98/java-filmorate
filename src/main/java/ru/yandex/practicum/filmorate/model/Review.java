@@ -22,13 +22,13 @@ import javax.validation.constraints.Size;
 public class Review {
 
     @JsonProperty("reviewId")
-    private Long id;
+    private Integer id;
 
     @NotNull
-    private final Long filmId;
+    private final Integer filmId;
 
     @NotNull
-    private final Long userId;
+    private final Integer userId;
 
     @NotNull
     @NotBlank

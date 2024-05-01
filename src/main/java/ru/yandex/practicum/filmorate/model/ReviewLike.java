@@ -16,8 +16,8 @@ import lombok.extern.jackson.Jacksonized;
 @AllArgsConstructor
 
 public class ReviewLike {
-    private Long id;
-    private final Long reviewId;
-    private final Long userId;
+    private Integer id;
+    private final Integer reviewId;
+    private final Integer userId;
     private final Boolean type;
 }

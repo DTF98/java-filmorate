@@ -44,7 +44,7 @@ public class ReviewService {
         return getById(updatedReview.getId());
     }
 
-    public long delete(long id) {
+    public int delete(int id) {
         deleteReviewLikes(id); // delete all review likes and dislikes
 
         reviewStorage.delete(id);
@@ -55,15 +55,15 @@ public class ReviewService {
     /**
      * Delete all review likes and dislikes
      */
-    public void deleteReviewLikes(long reviewId) {
+    public void deleteReviewLikes(int reviewId) {
         reviewLikeStorage.deleteLikes(reviewId);
     }
 
-    public void deleteReviewLike(long reviewId, long userId) {
+    public void deleteReviewLike(int reviewId, int userId) {
         reviewLikeStorage.deleteLike(reviewId, userId);
     }
 
-    public void deleteReviewDislike(long reviewId, long userId) {
+    public void deleteReviewDislike(int reviewId, int userId) {
         reviewLikeStorage.deleteDislike(reviewId, userId);
     }
 
@@ -76,7 +76,7 @@ public class ReviewService {
      * если указан count, получить только выбранное количество отзывово по фильму
      * в порядке от самых полезных к самым бесполезным
      */
-    public Collection<Review> getByFilmId(long filmId, int count) {
+    public Collection<Review> getByFilmId(int filmId, int count) {
         filmService.getById((int) filmId);
 
         return reviewStorage.getByFilmId(filmId).stream()
@@ -88,14 +88,14 @@ public class ReviewService {
     /**
      * Получить общее количество отзывов к фильмам
      */
-    public long getCount() {
+    public int getCount() {
         return reviewStorage.getAll().size();
     }
 
     /**
      * Получить отзыв к фильму по id
      */
-    public Review getById(long id) {
+    public Review getById(int id) {
         return reviewStorage.getById(id).orElseThrow(() -> {
             String errorText = "Отзыв с таким Id не найден: " + id;
             log.error(errorText);
@@ -106,7 +106,7 @@ public class ReviewService {
     /**
      * Поставить like отзыву
      */
-    public void addLike(long id, long userId) {
+    public void addLike(int id, int userId) {
         userService.getUserById((int) userId); // если пользователя нет, то метод сам пробросит ошибку
 
         reviewLikeStorage.addLike(id, userId); // добавляем лайк отзыву
@@ -117,7 +117,7 @@ public class ReviewService {
     /**
      * Поставить dislike отзыву
      */
-    public void addDislike(long id, long userId) {
+    public void addDislike(int id, int userId) {
         userService.getUserById((int) userId); // если пользователя нет, то метод сам пробросит ошибку
 
         reviewLikeStorage.addDislike(id, userId); // добавляем дизлайк отзыву
@@ -128,7 +128,7 @@ public class ReviewService {
     /**
      * Уменьшить полезность отзыва
      */
-    public void increaseUseful(long reviewId) {
+    public void increaseUseful(int reviewId) {
         getById(reviewId); // если отзыва нет, то метод пробросит ошибку
         reviewStorage.increaseUseful(reviewId);
     }
@@ -136,7 +136,7 @@ public class ReviewService {
     /**
      * Увеличить полезность отзыва
      */
-    public void decreaseUseful(long reviewId) {
+    public void decreaseUseful(int reviewId) {
         getById(reviewId); // если отзыва нет, то метод пробросит ошибку
         reviewStorage.decreaseUseful(reviewId);
     }

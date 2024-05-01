@@ -65,7 +65,7 @@ public class ReviewController {
     }
 
     @PutMapping("/{id}/like/{userId}")
-    public ResponseEntity<Film> addLike(@PathVariable long id, @PathVariable long userId) {
+    public ResponseEntity<Film> addLike(@PathVariable int id, @PathVariable int userId) {
         log.info("Пользователь {} ставит like отзыву {}", userId, id);
 
         reviewService.addLike(id, userId);
@@ -75,7 +75,7 @@ public class ReviewController {
     }
 
     @PutMapping("/{id}/dislike/{userId}")
-    public ResponseEntity<Film> addDislike(@PathVariable long id, @PathVariable long userId) {
+    public ResponseEntity<Film> addDislike(@PathVariable int id, @PathVariable int userId) {
         log.info("Пользователь {} ставит dislike отзыву {}", userId, id);
 
         reviewService.addDislike(id, userId);
@@ -85,25 +85,25 @@ public class ReviewController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Review> getById(@PathVariable long id) {
+    public ResponseEntity<Review> getById(@PathVariable int id) {
         log.info("Получить отзыв по ID фильма - {}", id);
 
         return respondSuccess(reviewService.getById(id));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Long> delete(@PathVariable long id) {
+    public ResponseEntity<Integer> delete(@PathVariable int id) {
         log.info("Удаление отзыва к фильму {}", id);
 
-        long reviewId = reviewService.delete(id);
+        int reviewId = reviewService.delete(id);
         log.info("Отзыв успешно удален");
 
         return respondSuccess(reviewId);
     }
 
     @DeleteMapping("/{id}/like/{userId}")
-    public ResponseEntity<Long> deleteLike(@PathVariable long id,
-                                           @PathVariable long userId) {
+    public ResponseEntity<Integer> deleteLike(@PathVariable int id,
+                                           @PathVariable int userId) {
         log.info("Удаление лайка к отзыву {}", id);
 
         reviewService.deleteReviewLike(id, userId);
@@ -113,8 +113,8 @@ public class ReviewController {
     }
 
     @DeleteMapping("/{id}/dislike/{userId}")
-    public ResponseEntity<Long> deleteDislike(@PathVariable long id,
-                                              @PathVariable long userId) {
+    public ResponseEntity<Integer> deleteDislike(@PathVariable int id,
+                                              @PathVariable int userId) {
         log.info("Удаление дизлайка к отзыву {}", id);
 
         reviewService.deleteReviewDislike(id, userId);
