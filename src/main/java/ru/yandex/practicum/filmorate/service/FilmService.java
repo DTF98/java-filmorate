@@ -33,6 +33,11 @@ public class FilmService {
         return filmStorage.getMostPopularFilms(count);
     }
 
+    public List<Film> searchFilmsAndDirectors(String query, List<String> by) {
+        log.info("Получение списка фильмов из поиска");
+        return filmStorage.getSearchedFilms(query, by);
+    }
+
     public List<Film> getFilms() {
         log.info("Получение списка всех фильмов");
         return new ArrayList<>(filmStorage.get());

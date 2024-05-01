@@ -9,6 +9,7 @@ import ru.yandex.practicum.filmorate.service.FilmService;
 
 import javax.validation.Valid;
 import java.util.Collection;
+import java.util.List;
 
 import static ru.yandex.practicum.filmorate.util.ResponseUtil.respondSuccess;
 import static ru.yandex.practicum.filmorate.util.ResponseUtil.respondSuccessList;
@@ -32,6 +33,11 @@ public class FilmController {
     @GetMapping("/popular")
     public ResponseEntity<?> getTopFilms(@RequestParam(defaultValue = "10", required = false) Integer count) {
         return respondSuccessList(service.search10MostPopularFilms(count));
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<?> search(@RequestParam(name = "query") String query, @RequestParam(name = "by") List<String> by) {
+        return respondSuccessList(service.searchFilmsAndDirectors(query, by));
     }
 
     @DeleteMapping("/{id}/like/{userId}")

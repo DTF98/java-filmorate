@@ -126,6 +126,32 @@ public class FilmDbStorage implements FilmStorage {
         return null;
     }
 
+    public List<Film> getSearchedFilms(String query, List<String> by) {
+        // TODO добавить валидацию query
+        boolean isTitle = by.contains("title");
+        boolean isDirector = by.contains("director");
+            try {
+                // TODO добавить поиск по режиссеру(director)
+                // TODO найти вариант, если есть, запроса без использования String.format
+                return jdbcTemplate.query(String.format("SELECT id, NAME, DESCRIPTION, DURATION, RELEASE_DATE," +
+                                " array_agg(GENRE), MPA, likes, MPA_ID, array_agg(GENRE_ID) FROM films AS f LEFT JOIN (SELECT FILM_ID," +
+                                " GENRE, fg.GENRE_ID FROM film_genres as fg LEFT JOIN genres AS g ON g.genre_id = fg.genre_id) AS" +
+                                " G ON f.ID = G.film_id LEFT JOIN (SELECT FILM_ID , MPA, fm.MPA_ID FROM FILM_MPA as fm JOIN MPA AS" +
+                                " m ON m.mpa_id = fm.mpa_id) AS M ON f.ID = M.film_id LEFT JOIN (SELECT FILM_ID, COUNT(USER_ID) AS" +
+                                " likes FROM FILM_LIKES GROUP BY FILM_ID) AS fl ON f.ID = FL.FILM_ID WHERE " +
+                                " CASEWHEN(%b, NAME ilike ('%%%s%%'), false) OR CASEWHEN(%b, DESCRIPTION ilike ('%%%s%%'), false) " +
+                                " GROUP BY id ORDER BY LIKES DESC;", isTitle, query, isDirector, query),
+                        this::mapRowToFilm);
+            } catch (DataAccessException e) {
+                log.error("Ошибка при поиске фильмов", e);
+            }
+        return new ArrayList<>();
+    }
+
+    public static String format(String format, Object... args) {
+        return (new Formatter()).format(format, args).toString();
+    }
+
     public Film addLike(Integer filmID, Integer userID) {
         try {
             String sqlLike = "MERGE INTO film_likes KEY(user_id, film_id) VALUES (?,?)";
