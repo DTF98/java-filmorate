@@ -59,4 +59,8 @@ public class UserController {
                                        @PathVariable("friendId") Integer friendId) {
         return respondSuccess(service.addToFriends(id, friendId));
     }
+    @GetMapping("/users/{id}/recommendations")
+    public ResponseEntity<?> getRecommendations(@PathVariable("id") Integer id) {
+        return respondSuccessList(service.getRecommendations(id));
+    }
 }
