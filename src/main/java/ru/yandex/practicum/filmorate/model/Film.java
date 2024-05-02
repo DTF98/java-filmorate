@@ -61,5 +61,4 @@ public class Film {
         this.mpa = mpa;
         this.directors = Objects.requireNonNullElseGet(directors, HashSet::new);
     }
-
 }
