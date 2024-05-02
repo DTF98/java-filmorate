@@ -42,8 +42,7 @@ public class Film {
     @NotNull
     @NonFinal
     @ValidateGenre("Номер жанра не должен быть больше 6 и меньше 1")
-    @Builder.Default
-    private Set<Genre> genres = new LinkedHashSet<>();
+    private Set<Genre> genres;
 
     @ValidateMPA("Номер рейтинга не должен быть больше 5 и меньше 1")
     private MPA mpa;
