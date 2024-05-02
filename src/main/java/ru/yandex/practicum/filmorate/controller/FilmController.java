@@ -2,14 +2,12 @@ package ru.yandex.practicum.filmorate.controller;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
 
 import javax.validation.Valid;
-import java.util.Collection;
 
 import static ru.yandex.practicum.filmorate.util.ResponseUtil.respondSuccess;
 import static ru.yandex.practicum.filmorate.util.ResponseUtil.respondSuccessList;
@@ -26,7 +24,7 @@ public class FilmController {
     }
 
     @GetMapping
-    public ResponseEntity<Collection<Film>> get() {
+    public ResponseEntity<?> get() {
         return respondSuccessList(service.getFilms());
     }
 
@@ -42,7 +40,7 @@ public class FilmController {
 
     @DeleteMapping("/{filmId}")
     public ResponseEntity<?> deleteFilm(@PathVariable("filmId") Integer id) {
-        return respondSuccess(service.deleteFilm(id));
+        return respondSuccess(service.delete(id));
     }
 
     @PostMapping
@@ -66,14 +64,8 @@ public class FilmController {
     }
 
     @GetMapping("/director/{directorId}")
-    public void getDirector(@PathVariable Integer directorId, @RequestParam String sortBy) {
-        //ResponseEntity<?>
-        Integer a = directorId;
-        if(sortBy.equals("likes")) {
-            System.out.println("ЛайкИИИИИИИИ");
-        } else if (sortBy.equals("year")) {
-            System.out.println("ГооооооооД");
-        }
+    public ResponseEntity<?> getDirector(@PathVariable Integer directorId, @RequestParam String sortBy) {
+        return respondSuccess(service.getSortedListOfDirectorsFilms(directorId, sortBy));
     }
 }
 

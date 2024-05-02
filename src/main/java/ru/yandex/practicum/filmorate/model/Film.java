@@ -40,12 +40,14 @@ public class Film {
     private Set<Genre> genres;
     @ValidateMPA("Номер рейтинга не должен быть больше 5 и меньше 1")
     private MPA mpa;
-    private Director director;
+    @NotNull
+    @NonFinal
+    private Set<Director> directors;
 
     @Builder
     @Jacksonized
     public Film(Integer id, String name, String description, LocalDate releaseDate, Integer duration, Set<Genre> genres,
-                MPA mpa, Director director) {
+                MPA mpa, Set<Director> directors) {
         this.id = id;
         this.name = name;
         this.description = description;
@@ -53,6 +55,6 @@ public class Film {
         this.duration = duration;
         this.genres = Objects.requireNonNullElseGet(genres, HashSet::new);
         this.mpa = mpa;
-        this.director = director;
+        this.directors = Objects.requireNonNullElseGet(directors, HashSet::new);
     }
 }

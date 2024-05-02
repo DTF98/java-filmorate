@@ -12,4 +12,8 @@ public interface FilmStorage extends Storage<Film> {
     public List<Integer> getLikes(Integer filmID);
 
     public List<Film> getMostPopularFilms(Integer count);
+
+    public List<Film> getSortedLikesListOfDirectorsFilms(Integer directorId);
+
+    public List<Film> getSortedYearListOfDirectorsFilms(Integer directorId);
 }
