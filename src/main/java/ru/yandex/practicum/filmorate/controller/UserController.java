@@ -28,6 +28,13 @@ public class UserController {
         return respondSuccessList(service.getUsers());
     }
 
+    @GetMapping("/users/{id}")
+    public ResponseEntity<User> getById(@PathVariable int id) {
+        log.info("Получить пользователя по ID - {}", id);
+
+        return respondSuccess(service.getUserById(id));
+    }
+
     @GetMapping("/users/{id}/friends")
     public ResponseEntity<?> getFriends(@PathVariable("id") Integer id) {
         return respondSuccessList(service.getFriends(id));
@@ -67,8 +74,4 @@ public class UserController {
         return respondSuccess(HttpStatus.OK);
     }
 
-    @GetMapping("/users/{id}")
-    public ResponseEntity<?> getUser(@PathVariable Integer id) {
-        return respondSuccess(service.getUserById(id));
-    }
 }

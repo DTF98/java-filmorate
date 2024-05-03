@@ -59,7 +59,7 @@ public class FilmService {
         return filmStorage.update(film);
     }
 
-    public Film getFilmById(Integer id) {
+    public Film getById(Integer id) {
         log.info("Получение фильма по id : {}", id);
         Optional<Film> film = filmStorage.getById(id);
         if (film.isPresent()) {

@@ -45,6 +45,20 @@ public class FilmDbStorage implements FilmStorage {
         }
     }
 
+    public Optional<Film> getById(Integer id) {
+        try {
+            return Optional.ofNullable(jdbcTemplate.queryForObject("SELECT id, NAME, DESCRIPTION, DURATION, RELEASE_DATE, " +
+                            "array_agg(GENRE), MPA, MPA_ID, array_agg(GENRE_ID) FROM films AS f LEFT JOIN (SELECT FILM_ID, " +
+                            "GENRE, fg.GENRE_ID FROM film_genres as fg JOIN genres AS g ON g.genre_id = fg.genre_id) AS" +
+                            " G ON f.ID = G.film_id LEFT JOIN (SELECT FILM_ID , MPA, fm.MPA_ID FROM FILM_MPA as fm JOIN MPA AS" +
+                            " m ON m.mpa_id = fm.mpa_i" +
+                            "d) AS M ON f.ID = M.film_id where id = ? GROUP BY id;",
+                    this::mapRowToFilm, id));
+        } catch (Exception e) {
+            throw new NotFoundException(String.format("Фильм по id = %s не найден!", id));
+        }
+    }
+
     public Film add(Film film) {
         try {
             String sqlFilm = "insert into films (name, description, release_date, duration) " +
@@ -76,8 +90,10 @@ public class FilmDbStorage implements FilmStorage {
         try {
             String sqlFilms = "UPDATE films SET name = ?, description = ?, release_Date = ?, " +
                     "duration = ? WHERE id = ?;";
+
             if (jdbcTemplate.update(sqlFilms, film.getName(), film.getDescription(), film.getReleaseDate(),
                     film.getDuration(), film.getId()) > 0) {
+
                 Film sort = updateFilmGenresLinks(film);
                 if (film.getMpa().getId() != null) {
                     String sql = "UPDATE film_mpa SET mpa_id = ? WHERE film_id = ?;";
@@ -89,20 +105,6 @@ public class FilmDbStorage implements FilmStorage {
             }
         } catch (DataAccessException e) {
             return null;
-        }
-    }
-
-    public Optional<Film> getById(Integer id) {
-        try {
-            return Optional.ofNullable(jdbcTemplate.queryForObject("SELECT id, NAME, DESCRIPTION, DURATION, RELEASE_DATE, " +
-                            "array_agg(GENRE), MPA, MPA_ID, array_agg(GENRE_ID) FROM films AS f LEFT JOIN (SELECT FILM_ID, " +
-                            "GENRE, fg.GENRE_ID FROM film_genres as fg JOIN genres AS g ON g.genre_id = fg.genre_id) AS" +
-                            " G ON f.ID = G.film_id LEFT JOIN (SELECT FILM_ID , MPA, fm.MPA_ID FROM FILM_MPA as fm JOIN MPA AS" +
-                            " m ON m.mpa_id = fm.mpa_i" +
-                            "d) AS M ON f.ID = M.film_id where id = ? GROUP BY id;",
-                    this::mapRowToFilm, id));
-        } catch (DataAccessException e) {
-            throw new NotFoundException(String.format("Фильм по id = %s не найден!", id));
         }
     }
 
@@ -183,8 +185,8 @@ public class FilmDbStorage implements FilmStorage {
             @Override
             public void setValues(PreparedStatement ps, int i) throws SQLException {
                 Genre genre = new ArrayList<>(genres).get(i);
-                ps.setLong(1, film.getId());
-                ps.setLong(2, genre.getId());
+                ps.setInt(1, film.getId());
+                ps.setInt(2, genre.getId());
             }
 
             @Override

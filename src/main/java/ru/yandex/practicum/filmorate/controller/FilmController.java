@@ -26,12 +26,19 @@ public class FilmController {
     }
 
     @GetMapping
-    public ResponseEntity<Collection<Film>> get() {
+    public ResponseEntity<Collection<Film>> getAll() {
         return respondSuccessList(service.getFilms());
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<Film> getById(@PathVariable int id) {
+        log.info("Получить фильм по ID - {}", id);
+
+        return respondSuccess(service.getById(id));
+    }
+
     @GetMapping("/popular")
-    public ResponseEntity<?> getTopFilms(@RequestParam(defaultValue = "10", required = false) Integer count) {
+    public ResponseEntity<?> getTopFilms(@RequestParam(defaultValue = "10") Integer count) {
         return respondSuccessList(service.search10MostPopularFilms(count));
     }
 
@@ -61,9 +68,5 @@ public class FilmController {
         return respondSuccess(service.updateFilm(film));
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<?> getFilm(@PathVariable Integer id) {
-        return respondSuccess(service.getFilmById(id));
-    }
 }
 
