@@ -119,12 +119,14 @@ public class ReviewService {
     /**
      * Поставить dislike отзыву
      */
-    public void addDislike(int id, int userId) {
+    public Integer addDislike(int id, int userId) {
         userService.getUserById((int) userId); // если пользователя нет, то метод сам пробросит ошибку
 
-        reviewLikeStorage.addDislike(id, userId); // добавляем дизлайк отзыву
+        Integer reviewDislikeId = reviewLikeStorage.addDislike(id, userId); // добавляем дизлайк отзыву
 
         decreaseUseful(id); // уменьшить полезность отзыва
+
+        return reviewDislikeId;
     }
 
     /**

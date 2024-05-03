@@ -82,8 +82,8 @@ public class ReviewController {
     public ResponseEntity<Film> addDislike(@PathVariable int id, @PathVariable int userId) {
         log.info("Пользователь {} ставит dislike отзыву {}", userId, id);
 
-        Integer reviewLikeId = reviewService.addLike(id, userId);
-        if (reviewLikeId != null) {
+        Integer reviewDislikeId = reviewService.addDislike(id, userId);
+        if (reviewDislikeId != null) {
             log.info("Dislike отзыву успешно поставлен");
             return respondSuccess();
         } else {
