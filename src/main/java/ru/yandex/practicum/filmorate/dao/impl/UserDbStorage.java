@@ -99,6 +99,7 @@ public class UserDbStorage implements UserStorage {
         }
     }
 
+    @Override
     public Integer deleteFriend(Integer user, Integer friend) {
         if (isExistById(user) && isExistById(friend)) {
             try {
@@ -133,6 +134,7 @@ public class UserDbStorage implements UserStorage {
         jdbcTemplate.update("DELETE FROM FILM_LIKES WHERE user_id = ?", userId);
     }
 
+    @Override
     public List<User> getFriends(Integer userId) {
         if (isExistById(userId)) {
             try {
@@ -161,6 +163,7 @@ public class UserDbStorage implements UserStorage {
         String sqlQuery = "SELECT EXISTS(SELECT 1 FROM USERS WHERE ID = ?)";
         return Boolean.TRUE.equals(jdbcTemplate.queryForObject(sqlQuery, Boolean.class, id));
     }
+
     @Override
     public List<Optional<Film>> getRecommendations(int id) {
         SqlRowSet userLike = jdbcTemplate.queryForRowSet("select film_id from film_likes where user_id=?", id);
