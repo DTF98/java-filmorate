@@ -54,13 +54,7 @@ public class Film {
         this.description = description;
         this.releaseDate = releaseDate;
         this.duration = duration;
-        if (genres != null) { // Сортировка при присвоении, не проходят тесты без сортировки
-            this.genres = genres.stream()
-                    .sorted(Comparator.comparingInt(Genre::getId))
-                    .collect(Collectors.toCollection(LinkedHashSet::new));
-        } else {
-            this.genres = new LinkedHashSet<>();
-        }
+        this.genres = Objects.requireNonNullElseGet(genres, HashSet::new);
         this.mpa = mpa;
     }
 
