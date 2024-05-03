@@ -36,7 +36,7 @@ public class Review {
     private String content;
 
     @Builder.Default
-    private Integer useful = 0;
+    private int useful = 0;
 
     @JsonProperty("isPositive")
     @NotNull

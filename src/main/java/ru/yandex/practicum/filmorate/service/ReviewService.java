@@ -106,12 +106,14 @@ public class ReviewService {
     /**
      * Поставить like отзыву
      */
-    public void addLike(int id, int userId) {
+    public Integer addLike(int id, int userId) {
         userService.getUserById((int) userId); // если пользователя нет, то метод сам пробросит ошибку
 
-        reviewLikeStorage.addLike(id, userId); // добавляем лайк отзыву
+        Integer reviewLikeId = reviewLikeStorage.addLike(id, userId); // добавляем лайк отзыву
 
         increaseUseful(id); // увеличить полезность отзыва
+
+        return reviewLikeId;
     }
 
     /**

@@ -2,6 +2,7 @@ package ru.yandex.practicum.filmorate.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.Film;
@@ -11,8 +12,7 @@ import ru.yandex.practicum.filmorate.service.ReviewService;
 import javax.validation.Valid;
 import java.util.Collection;
 
-import static ru.yandex.practicum.filmorate.util.ResponseUtil.respondSuccess;
-import static ru.yandex.practicum.filmorate.util.ResponseUtil.respondSuccessList;
+import static ru.yandex.practicum.filmorate.util.ResponseUtil.*;
 
 @Slf4j
 @RestController
@@ -68,20 +68,28 @@ public class ReviewController {
     public ResponseEntity<Film> addLike(@PathVariable int id, @PathVariable int userId) {
         log.info("Пользователь {} ставит like отзыву {}", userId, id);
 
-        reviewService.addLike(id, userId);
-        log.info("Like отзыву успешно поставлен");
-
-        return respondSuccess();
+        Integer reviewLikeId = reviewService.addLike(id, userId);
+        if (reviewLikeId != null) {
+            log.info("Like отзыву успешно поставлен");
+            return respondSuccess();
+        } else {
+            log.error("Не удалось добавить like");
+            return respondError(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     @PutMapping("/{id}/dislike/{userId}")
     public ResponseEntity<Film> addDislike(@PathVariable int id, @PathVariable int userId) {
         log.info("Пользователь {} ставит dislike отзыву {}", userId, id);
 
-        reviewService.addDislike(id, userId);
-        log.info("Dislike отзыву успешно поставлен");
-
-        return respondSuccess();
+        Integer reviewLikeId = reviewService.addLike(id, userId);
+        if (reviewLikeId != null) {
+            log.info("Dislike отзыву успешно поставлен");
+            return respondSuccess();
+        } else {
+            log.error("Не удалось добавить Dislike");
+            return respondError(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     @GetMapping("/{id}")
@@ -103,7 +111,7 @@ public class ReviewController {
 
     @DeleteMapping("/{id}/like/{userId}")
     public ResponseEntity<Integer> deleteLike(@PathVariable int id,
-                                           @PathVariable int userId) {
+                                              @PathVariable int userId) {
         log.info("Удаление лайка к отзыву {}", id);
 
         reviewService.deleteReviewLike(id, userId);
@@ -114,7 +122,7 @@ public class ReviewController {
 
     @DeleteMapping("/{id}/dislike/{userId}")
     public ResponseEntity<Integer> deleteDislike(@PathVariable int id,
-                                              @PathVariable int userId) {
+                                                 @PathVariable int userId) {
         log.info("Удаление дизлайка к отзыву {}", id);
 
         reviewService.deleteReviewDislike(id, userId);

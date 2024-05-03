@@ -8,6 +8,7 @@ import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.dao.ReviewStorage;
 
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Review;
 
 import java.sql.ResultSet;
@@ -59,7 +60,12 @@ public class ReviewDbStorageImpl implements ReviewStorage {
     public int delete(int id) {
         try {
             String sqlQuery = "delete from REVIEW where ID = ?;";
+
             boolean isSuccess = jdbcTemplate.update(sqlQuery, id) > 0;
+
+            if (!isSuccess) {
+                throw new NotFoundException("Отзыв не найден!");
+            }
         } catch (DataAccessException e) {
             log.error("Error in delete review", e);
         }

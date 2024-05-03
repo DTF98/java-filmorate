@@ -29,4 +29,10 @@ public class ResponseUtil {
                 .build();
     }
 
+    public static <T> ResponseEntity<T> respondError(HttpStatus httpStatus) {
+        return ResponseEntity
+                .status(httpStatus)
+                .build();
+    }
+
 }

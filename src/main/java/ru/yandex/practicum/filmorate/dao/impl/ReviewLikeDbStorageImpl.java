@@ -7,6 +7,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.dao.ReviewLikeStorage;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.ReviewLike;
 
 import java.util.*;
@@ -67,6 +68,10 @@ public class ReviewLikeDbStorageImpl implements ReviewLikeStorage {
                     " WHERE REVIEW_ID = ?;";
 
             boolean isSuccess = jdbcTemplate.update(sqlQuery, reviewId) > 0;
+
+            if (!isSuccess) {
+                throw new NotFoundException("Лайки отзыва не удалены!");
+            }
         } catch (DataAccessException e) {
             log.error("Error in delete review like", e);
         }
@@ -82,7 +87,12 @@ public class ReviewLikeDbStorageImpl implements ReviewLikeStorage {
                     " WHERE REVIEW_ID = ? " +
                     " AND USER_ID = ? " +
                     " AND LIKE_TYPE = TRUE;";
+
             boolean isSuccess = jdbcTemplate.update(sqlQuery, reviewId, userId) > 0;
+
+            if (!isSuccess) {
+                throw new NotFoundException("Лайк отзыва не удален!");
+            }
         } catch (DataAccessException e) {
             log.error("Error in delete review like", e);
         }
@@ -98,7 +108,12 @@ public class ReviewLikeDbStorageImpl implements ReviewLikeStorage {
                     " WHERE REVIEW_ID = ? " +
                     " AND USER_ID = ? " +
                     " AND LIKE_TYPE = FALSE;";
+
             boolean isSuccess = jdbcTemplate.update(sqlQuery, reviewId, userId) > 0;
+
+            if (!isSuccess) {
+                throw new NotFoundException("Дизлайк отзыва не удален!");
+            }
         } catch (DataAccessException e) {
             log.error("Error in delete review like", e);
         }

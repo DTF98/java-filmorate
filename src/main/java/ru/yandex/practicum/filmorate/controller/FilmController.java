@@ -38,7 +38,7 @@ public class FilmController {
     }
 
     @GetMapping("/popular")
-    public ResponseEntity<?> getTopFilms(@RequestParam(defaultValue = "10", required = false) Integer count) {
+    public ResponseEntity<?> getTopFilms(@RequestParam(defaultValue = "10") Integer count) {
         return respondSuccessList(service.search10MostPopularFilms(count));
     }
 
