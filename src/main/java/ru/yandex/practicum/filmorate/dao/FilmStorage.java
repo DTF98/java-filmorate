@@ -13,6 +13,12 @@ public interface FilmStorage extends Storage<Film> {
 
     List<Film> getMostPopularFilms(Integer count);
 
+    List<Film> getMostPopularFilmsByGenreIdAndYear(Integer count, Integer year, Integer genreId);
+
+    List<Film> getMostPopularFilmsByYear(Integer count, Integer year);
+
+    List<Film> getMostPopularFilmsByGenreId(Integer count, Integer genreId);
+
     List<Film> getSortedLikesListOfDirectorsFilms(Integer directorId);
 
     List<Film> getSortedYearListOfDirectorsFilms(Integer directorId);
