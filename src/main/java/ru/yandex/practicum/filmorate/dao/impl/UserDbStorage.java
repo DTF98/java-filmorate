@@ -8,23 +8,24 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Component;
+import ru.yandex.practicum.filmorate.dao.FilmStorage;
 import ru.yandex.practicum.filmorate.dao.UserStorage;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 @Slf4j
 @Component
 @AllArgsConstructor
 public class UserDbStorage implements UserStorage {
     private final JdbcTemplate jdbcTemplate;
+    private final FilmStorage filmStorage;
 
     public List<User> get() {
         return jdbcTemplate.query("select * from users order by id", this::mapRowToUser);
@@ -156,5 +157,155 @@ public class UserDbStorage implements UserStorage {
     private boolean isExistById(Integer id) {
         String sqlQuery = "SELECT EXISTS(SELECT 1 FROM USERS WHERE ID = ?)";
         return Boolean.TRUE.equals(jdbcTemplate.queryForObject(sqlQuery, Boolean.class, id));
+    }
+
+    @Override
+    public List<Optional<Film>> getRecommendations(int id) {
+        SqlRowSet userLike = jdbcTemplate.queryForRowSet("select film_id from film_likes where user_id=?", id);
+        List<Integer> currentFilmIdsUser = new ArrayList<>();
+        while (userLike.next()) {
+            currentFilmIdsUser.add(userLike.getInt("film_id"));
+        }
+        if (currentFilmIdsUser.isEmpty()) {
+            List<Optional<Film>> recommendations = new ArrayList<>();
+            log.info(String.format("Для пользователя %d нет рекомендаций.", id));
+            return recommendations;
+        }
+
+        Optional<User> anotherUser = getUserWithMaxCommonLikes(id);
+        if (anotherUser == null) {
+            List<Optional<Film>> recommendations = new ArrayList<>();
+            log.info(String.format("Для пользователя %d нет рекомендаций.", id));
+            return recommendations;
+        }
+        SqlRowSet anotherUserLike = jdbcTemplate.queryForRowSet("select film_id from film_likes where user_id=?",
+                anotherUser.get().getId());
+
+        List<Integer> filmIdsAnotherUser = new ArrayList<>();
+        while (anotherUserLike.next()) {
+            filmIdsAnotherUser.add(anotherUserLike.getInt("film_id"));
+        }
+
+        List<Optional<Film>> films = new ArrayList<>();
+        for (Integer i : filmIdsAnotherUser) {
+            if (!currentFilmIdsUser.contains(i)) {
+                films.add(filmStorage.getById(i));
+            }
+        }
+        if (films.isEmpty()) {
+            Optional<User> newUser = getAnotherUserWithMaxCommonLikes(id);
+
+            if (newUser == null) {
+                List<Optional<Film>> recommendations = new ArrayList<>();
+                log.info(String.format("Для пользователя %d нет рекомендаций.", id));
+                return recommendations;
+            }
+            SqlRowSet newUserLikes = jdbcTemplate.queryForRowSet("select film_id from film_likes where user_id=?",
+                    newUser.get().getId());
+
+            List<Integer> filmIdsNewUser = new ArrayList<>();
+            while (newUserLikes.next()) {
+                filmIdsNewUser.add(newUserLikes.getInt("film_id"));
+            }
+
+            List<Optional<Film>> anotherListFilms = new ArrayList<>();
+            for (Integer i : filmIdsNewUser) {
+                if (!currentFilmIdsUser.contains(i)) {
+                    anotherListFilms.add(filmStorage.getById(i));
+                }
+            }
+            return anotherListFilms;
+        } else {
+            return films;
+        }
+    }
+
+
+    public Optional<User> getUserWithMaxCommonLikes(int userId) {
+        List<Integer> userIds = new ArrayList<>();
+        String sql = "select user_id from film_likes where film_id IN " +
+                "\n(select film_id from film_likes where user_id=?)";
+        SqlRowSet rs = jdbcTemplate.queryForRowSet(sql, userId);
+        while (rs.next()) {
+            if (userId != rs.getInt("user_id")) {
+                userIds.add(rs.getInt("user_id"));
+            }
+        }
+        if (userIds.isEmpty()) {
+            return null;
+        }
+        return getById(mostCommon(userIds));
+    }
+
+
+    public Optional<User> getAnotherUserWithMaxCommonLikes(int userId) {
+        List<Integer> userIds = new ArrayList<>();
+
+        String sql = "select user_id from film_likes where film_id IN " +
+                "\n(select film_id from film_likes where user_id=?)";
+
+        SqlRowSet rs = jdbcTemplate.queryForRowSet(sql, userId);
+        while (rs.next()) {
+            if (userId != rs.getInt("user_id")) {
+                userIds.add(rs.getInt("user_id"));
+            }
+        }
+        if (userIds.isEmpty()) {
+            return null;
+        }
+
+        Optional<User> newUser = getById(mostCommon(userIds));
+
+        SqlRowSet newUserLikesSql = jdbcTemplate.queryForRowSet("select film_id from FILM_LIKES where user_id=?",
+                newUser.get().getId());
+        List<Integer> newUserLikes = new ArrayList<>();
+        while (newUserLikesSql.next()) {
+            newUserLikes.add(newUserLikesSql.getInt("film_id"));
+        }
+        if (newUserLikes.isEmpty()) {
+            return null;
+        }
+
+        SqlRowSet currentUserLikesSql = jdbcTemplate.queryForRowSet("select film_id from film_likes where user_id=?", userId);
+        List<Integer> currentUserLikes = new ArrayList<>();
+
+        while (currentUserLikesSql.next()) {
+            currentUserLikes.add(currentUserLikesSql.getInt("film_id"));
+        }
+
+        List<Integer> newListUserIds = new ArrayList<>();
+        if (currentUserLikes.containsAll(newUserLikes)) {
+            for (Integer id : userIds) {
+                if (!id.equals(newUser.get().getId())) {
+                    newListUserIds.add(id);
+                }
+            }
+        }
+
+        if (newListUserIds.isEmpty()) {
+            return null;
+        }
+
+
+        return getById(mostCommon(newListUserIds));
+    }
+
+
+    public static <T> T mostCommon(List<T> list) {
+        Map<T, Integer> map = new HashMap<>();
+
+        for (T t : list) {
+            Integer val = map.get(t);
+            map.put(t, val == null ? 1 : val + 1);
+        }
+
+        Map.Entry<T, Integer> max = null;
+
+        for (Map.Entry<T, Integer> e : map.entrySet()) {
+            if (max == null || e.getValue() > max.getValue())
+                max = e;
+        }
+
+        return max.getKey();
     }
 }
