@@ -8,8 +8,7 @@ import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
 
 import javax.validation.Valid;
-import java.util.Collection;
-import java.util.List;
+import javax.xml.bind.ValidationException;
 
 import static ru.yandex.practicum.filmorate.util.ResponseUtil.respondSuccess;
 import static ru.yandex.practicum.filmorate.util.ResponseUtil.respondSuccessList;
@@ -26,23 +25,23 @@ public class FilmController {
     }
 
     @GetMapping
-    public ResponseEntity<Collection<Film>> get() {
-        return respondSuccessList(service.getFilms());
+    public ResponseEntity<?> get() {
+        return respondSuccessList(service.getAll());
     }
 
     @GetMapping("/popular")
-    public ResponseEntity<?> getTopFilms(@RequestParam(defaultValue = "10", required = false) Integer count) {
-        return respondSuccessList(service.search10MostPopularFilms(count));
-    }
-
-    @GetMapping("/search")
-    public ResponseEntity<?> search(@RequestParam(name = "query") String query, @RequestParam(name = "by") List<String> by) {
-        return respondSuccessList(service.searchFilmsAndDirectors(query, by));
+    public ResponseEntity<?> getTopFilms(@RequestParam(defaultValue = "10") Integer count, Integer genreId, Integer year) throws ValidationException {
+        return respondSuccessList(service.search10MostPopularFilms(count, genreId, year));
     }
 
     @DeleteMapping("/{id}/like/{userId}")
     public ResponseEntity<?> deleteLike(@PathVariable("id") Integer id, @PathVariable("userId") Integer userId) {
-        return respondSuccess(service.removeLike(userId, id));
+        return respondSuccess(service.deleteLike(userId, id));
+    }
+
+    @DeleteMapping("/{filmId}")
+    public ResponseEntity<?> deleteById(@PathVariable("filmId") Integer id) {
+        return respondSuccess(service.delete(id));
     }
 
     @PostMapping
@@ -61,8 +60,13 @@ public class FilmController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getFilm(@PathVariable Integer id) {
-        return respondSuccess(service.getFilmById(id));
+    public ResponseEntity<?> getById(@PathVariable Integer id) {
+        return respondSuccess(service.getById(id));
+    }
+
+    @GetMapping("/director/{directorId}")
+    public ResponseEntity<?> getFilmsOfDirector(@PathVariable Integer directorId, @RequestParam String sortBy) {
+        return respondSuccess(service.getSortedListOfDirectorsFilms(directorId, sortBy));
     }
 }
 
