@@ -96,6 +96,7 @@ public class UserDbStorage implements UserStorage {
         }
     }
 
+    @Override
     public Integer deleteFriend(Integer user, Integer friend) {
         if (isExistById(user) && isExistById(friend)) {
             try {
@@ -130,6 +131,7 @@ public class UserDbStorage implements UserStorage {
         jdbcTemplate.update("DELETE FROM FILM_LIKES WHERE user_id = ?", userId);
     }
 
+    @Override
     public List<User> getFriends(Integer userId) {
         if (isExistById(userId)) {
             try {

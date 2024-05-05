@@ -81,7 +81,8 @@ public class UserService {
             return null;
         }
     }
-    public List<Optional<Film>> getRecommendations(int id){
+
+    public List<Optional<Film>> getRecommendations(int id) {
         log.info("Рекомендации найдены");
         return storage.getRecommendations(id);
     }

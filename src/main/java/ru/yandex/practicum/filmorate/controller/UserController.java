@@ -77,5 +77,4 @@ public class UserController {
     public ResponseEntity<?> getRecommendations(@PathVariable("id") Integer id) {
         return respondSuccessList(service.getRecommendations(id));
     }
-
 }
