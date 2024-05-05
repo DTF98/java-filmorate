@@ -29,14 +29,13 @@ public class FilmService {
         return filmStorage.deleteLike(filmID, userID);
     }
 
-    public void deleteFilm(Integer filmID) {
+    public boolean delete(Integer filmID) {
         log.info("Удаление фильма id = {}", filmID);
-        boolean delFilm = filmStorage.delete(filmID);
-        if (delFilm) {
-            log.info("Удален фильма id = {}", filmID);
-        } else {
+        if (!filmStorage.delete(filmID)) {
             throw new NotFoundException("Не найдено по ИД");
         }
+        log.info("Удален фильм id = {}", filmID);
+        return true;
     }
 
     public List<Film> search10MostPopularFilms(Integer count) {
@@ -44,7 +43,7 @@ public class FilmService {
         return filmStorage.getMostPopularFilms(count);
     }
 
-    public List<Film> getFilms() {
+    public List<Film> getAll() {
         log.info("Получение списка всех фильмов");
         return new ArrayList<>(filmStorage.get());
     }
@@ -65,6 +64,17 @@ public class FilmService {
         if (film.isPresent()) {
             log.info(String.format("Получен фильм по id = %s : %s", id, film));
             return film.get();
+        }
+        return null;
+    }
+
+    public List<Film> getSortedListOfDirectorsFilms(Integer id, String sortBy) {
+        if (sortBy.equals("likes")) {
+            log.info("Получение списка фильмов режиссёра, отсортированных по количеству лайков");
+            return filmStorage.getSortedLikesListOfDirectorsFilms(id);
+        } else if (sortBy.equals("year")) {
+            log.info("Получение списка фильмов режиссёра, отсортированных по году");
+            return filmStorage.getSortedYearListOfDirectorsFilms(id);
         }
         return null;
     }
