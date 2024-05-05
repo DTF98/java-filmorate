@@ -7,6 +7,7 @@ import ru.yandex.practicum.filmorate.dao.FilmStorage;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 
+import javax.xml.bind.ValidationException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -38,9 +39,22 @@ public class FilmService {
         return true;
     }
 
-    public List<Film> search10MostPopularFilms(Integer count) {
-        log.info("Получение списка популярных фильмов");
-        return filmStorage.getMostPopularFilms(count);
+    public List<Film> search10MostPopularFilms(Integer count, Integer genreId, Integer year) throws ValidationException {
+        if (genreId != null && year == null) {
+            log.info("Получение списка популярных фильмов по жанру");
+            return filmStorage.getMostPopularFilmsByGenreId(count, genreId);
+        } else if (genreId == null && year != null) {
+            log.info("Получение списка популярных фильмов по году");
+            return filmStorage.getMostPopularFilmsByYear(count, year);
+        } else if (genreId != null) {
+            log.info("Получение списка популярных фильмов по жанру и году");
+            return filmStorage.getMostPopularFilmsByGenreIdAndYear(count, year, genreId);
+        } else if (count != null) {
+            log.info("Получение списка популярных фильмов");
+            return filmStorage.getMostPopularFilms(count);
+        } else {
+            throw new ValidationException("Переданы не валидные параметры запроса");
+        }
     }
 
     public List<Film> getAll() {
