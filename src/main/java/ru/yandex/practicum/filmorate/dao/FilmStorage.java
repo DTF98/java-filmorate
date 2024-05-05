@@ -22,4 +22,6 @@ public interface FilmStorage extends Storage<Film> {
     List<Film> getSortedLikesListOfDirectorsFilms(Integer directorId);
 
     List<Film> getSortedYearListOfDirectorsFilms(Integer directorId);
+
+    List<Film> getSearchedFilms(String query, List<String> by);
 }

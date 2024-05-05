@@ -94,6 +94,41 @@ public class FilmDbStorage implements FilmStorage {
         return null;
     }
 
+    public List<Film> getSearchedFilms(String query, List<String> by) {
+        String maskedQuery = "%" + query + "%";
+        boolean isTitle = by.contains("title");
+        boolean isDirector = by.contains("director");
+        try {
+            String sqlSearch = "SELECT id, NAME, DESCRIPTION, DURATION, RELEASE_DATE, " +
+                    "array_agg(GENRE), MPA, MPA_ID, array_agg(GENRE_ID), array_agg(DIRECTOR_ID), " +
+                    "array_agg(DIRECTOR_NAME) " +
+                    "FROM films AS f " +
+                    "LEFT JOIN (SELECT FILM_ID, GENRE, fg.GENRE_ID FROM film_genres as fg " +
+                    "LEFT JOIN genres AS g ON g.genre_id = fg.genre_id) AS G ON f.ID = G.film_id " +
+                    "LEFT JOIN (SELECT FILM_ID , MPA, fm.MPA_ID FROM FILM_MPA as fm " +
+                    "JOIN MPA AS m ON m.mpa_id = fm.mpa_id) AS M ON f.ID = M.film_id " +
+                    "LEFT JOIN (SELECT FILM_ID, COUNT(USER_ID) AS likes " +
+                    "FROM FILM_LIKES GROUP BY FILM_ID) AS fl ON f.ID = FL.FILM_ID " +
+                    "LEFT JOIN (SELECT d.DIRECTOR_ID, d.DIRECTOR_NAME, fd.FILM_ID " +
+                    "FROM FILM_DIRECTORS as fd " +
+                    "LEFT JOIN DIRECTORS AS d ON d.DIRECTOR_ID = fd.DIRECTOR_ID) AS D ON f.ID = D.FILM_ID " +
+                    "WHERE CASEWHEN(?, NAME ilike (?), false) OR CASEWHEN(?, D.DIRECTOR_NAME ilike (?), false) " +
+                    "GROUP BY id " +
+                    "ORDER BY LIKES DESC;";
+            return jdbcTemplate.query(connection -> {
+                PreparedStatement preparedStatement = connection.prepareStatement(sqlSearch);
+                preparedStatement.setBoolean(1, isTitle);
+                preparedStatement.setString(2, maskedQuery);
+                preparedStatement.setBoolean(3, isDirector);
+                preparedStatement.setString(4, maskedQuery);
+                return preparedStatement;
+            }, this::mapRowToFilm);
+        } catch (DataAccessException e) {
+            log.error("Ошибка при поиске фильмов", e);
+        }
+        return new ArrayList<>();
+    }
+
     public List<Film> getSortedLikesListOfDirectorsFilms(Integer directorId) {
         try {
             List<Film> like = jdbcTemplate.query(String.format("SELECT id, NAME, DESCRIPTION, DURATION, RELEASE_DATE, " +
