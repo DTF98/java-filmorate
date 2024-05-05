@@ -208,8 +208,8 @@ public class FilmDbStorage implements FilmStorage {
             }
         } catch (DataAccessException e) {
             log.error("Ошибка при добавления лайка", e);
-            return null;
         }
+        return null;
     }
 
     public Integer deleteLike(Integer filmID, Integer userID) {
