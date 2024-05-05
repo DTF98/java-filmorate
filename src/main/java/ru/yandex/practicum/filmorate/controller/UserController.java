@@ -72,6 +72,10 @@ public class UserController {
     public ResponseEntity<?> deleteUser(@PathVariable Integer id) {
         return respondSuccess(HttpStatus.OK);
     }
+    @GetMapping("/users/{id}/recommendations")
+    public ResponseEntity<?> getRecommendations(@PathVariable("id") Integer id) {
+        return respondSuccessList(service.getRecommendations(id));
+    }
 
     @GetMapping("/users/{id}/recommendations")
     public ResponseEntity<?> getRecommendations(@PathVariable("id") Integer id) {
