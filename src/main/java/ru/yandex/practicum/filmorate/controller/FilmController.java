@@ -68,5 +68,12 @@ public class FilmController {
     public ResponseEntity<?> getFilmsOfDirector(@PathVariable Integer directorId, @RequestParam String sortBy) {
         return respondSuccess(service.getSortedListOfDirectorsFilms(directorId, sortBy));
     }
+
+
+    @GetMapping("/common")
+    public ResponseEntity<?> getCommonFilms(@RequestParam("userId") Integer userId,
+                                          @RequestParam("friendId") Integer friendId) {
+        return respondSuccessList(service.getCommonFilms(userId, friendId));
+    }
 }
 

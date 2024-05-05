@@ -8,6 +8,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.SingleColumnRowMapper;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
+import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.dao.FilmStorage;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
@@ -426,17 +427,17 @@ public class FilmDbStorage implements FilmStorage {
     private Set<Genre> mapRowToSetGenres(ResultSet resultSet) throws SQLException {
         Set<Genre> newGenres = new TreeSet<>(Comparator.comparing(Genre::getId));
         List<Integer> idGen = Arrays.stream(
-                resultSet.getString("ARRAY_AGG(GENRE_ID)")
-                .replaceAll("[\\[\\]\\\\ ]", "")
-                .split(","))
+                        resultSet.getString("ARRAY_AGG(GENRE_ID)")
+                                .replaceAll("[\\[\\]\\\\ ]", "")
+                                .split(","))
                 .filter(elem -> !elem.equals("null"))
                 .map(Integer::parseInt)
                 .collect(Collectors.toList()
                 );
         List<String> nameGen = Arrays.stream(
-                resultSet.getString("ARRAY_AGG(GENRE)")
-                .replaceAll("[\\[\\]\\\\ ]", "")
-                .split(","))
+                        resultSet.getString("ARRAY_AGG(GENRE)")
+                                .replaceAll("[\\[\\]\\\\ ]", "")
+                                .split(","))
                 .filter(elem -> !elem.equals("null"))
                 .collect(Collectors.toList()
                 );
@@ -449,17 +450,17 @@ public class FilmDbStorage implements FilmStorage {
     private Set<Director> mapRowToSetDirectors(ResultSet resultSet) throws SQLException {
         Set<Director> newDirectors = new TreeSet<>(Comparator.comparing(Director::getId));
         List<Integer> idDir = Arrays.stream(
-                resultSet.getString("ARRAY_AGG(DIRECTOR_ID)")
-                .replaceAll("[\\[\\] ]", "")
-                .split(","))
+                        resultSet.getString("ARRAY_AGG(DIRECTOR_ID)")
+                                .replaceAll("[\\[\\] ]", "")
+                                .split(","))
                 .filter(elem -> !elem.equals("null"))
                 .map(Integer::parseInt)
                 .collect(Collectors.toList()
                 );
         List<String> nameDir = Arrays.stream(
-                resultSet.getString("ARRAY_AGG(DIRECTOR_NAME)")
-                .replaceAll("[\\[\\]]", "")
-                .split(","))
+                        resultSet.getString("ARRAY_AGG(DIRECTOR_NAME)")
+                                .replaceAll("[\\[\\]]", "")
+                                .split(","))
                 .filter(elem -> !elem.equals("null"))
                 .collect(Collectors.toList()
                 );
@@ -467,5 +468,57 @@ public class FilmDbStorage implements FilmStorage {
             newDirectors.add(new Director(idDir.get(i), nameDir.get(i)));
         }
         return newDirectors;
+    }
+
+
+    @Override
+    public List<Optional<Film>> getCommonFilms(Integer userId, Integer friendId) {
+        SqlRowSet userFilms = jdbcTemplate.queryForRowSet("SELECT FILM_ID FROM FilM_LIKES WHERE USER_ID=?", userId);
+        List<Integer> userFilmIds = new ArrayList<>();
+        while (userFilms.next()) {
+            userFilmIds.add(userFilms.getInt("FILM_ID"));
+        }
+        SqlRowSet friendsFilms = jdbcTemplate.queryForRowSet("SELECT FILM_ID FROM FilM_LIKES WHERE USER_ID=?", friendId);
+        List<Integer> friendsFilmIds = new ArrayList<>();
+        while (friendsFilms.next()) {
+            friendsFilmIds.add(friendsFilms.getInt("FILM_ID"));
+        }
+
+
+        List<Integer> commonFilmsIds = new ArrayList<>();
+        for (Integer userFilmId : userFilmIds) {
+            if (friendsFilmIds.contains(userFilmId)) {
+                commonFilmsIds.add(userFilmId);
+            }
+        }
+        List<Optional<Film>> commonFilms = new ArrayList<>();
+
+        List<Integer> sortedFilmsIds = getSortedFilmByPopularity(commonFilmsIds);
+        for (Integer sortedFilmsId : sortedFilmsIds) {
+            commonFilms.add(getById(sortedFilmsId));
+        }
+
+        if (commonFilms.isEmpty()) {
+            return new ArrayList<>();
+        } else {
+            return commonFilms;
+        }
+    }
+
+    public List<Integer> getSortedFilmByPopularity(List<Integer> filmIds) {
+        Map<Integer, Integer> filmPopularityMap = new HashMap<>();
+        for (Integer id : filmIds) {
+            SqlRowSet sqlRowSet = jdbcTemplate.queryForRowSet("SELECT COUNT(FILM_ID) FROM FILM_LIKES WHERE FILM_ID=?", id);
+            while (sqlRowSet.next()) {
+                int count = sqlRowSet.getInt("COUNT(FILM_ID)");
+                filmPopularityMap.put(id, count);
+            }
+        }
+        List<Integer> sortedFilmIds = new ArrayList<>();
+        filmPopularityMap.entrySet().stream()
+                .sorted(Map.Entry.<Integer, Integer>comparingByValue().reversed());
+        sortedFilmIds.addAll(filmPopularityMap.keySet());
+
+        return sortedFilmIds;
     }
 }
