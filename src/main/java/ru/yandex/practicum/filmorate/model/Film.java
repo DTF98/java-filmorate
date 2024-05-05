@@ -45,6 +45,9 @@ public class Film {
 
     @ValidateMPA("Номер рейтинга не должен быть больше 5 и меньше 1")
     private MPA mpa;
+    @NotNull
+    @NonFinal
+    private Set<Director> directors;
 
     @NotNull
     @NonFinal
