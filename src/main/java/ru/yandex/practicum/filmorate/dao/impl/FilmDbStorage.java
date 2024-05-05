@@ -194,6 +194,84 @@ public class FilmDbStorage implements FilmStorage {
         }
     }
 
+    public List<Film> getMostPopularFilmsByGenreId(Integer count, Integer genreId) {
+        if (count > 0) {
+            try {
+                return jdbcTemplate.query(String.format("SELECT id, NAME, DESCRIPTION, DURATION, RELEASE_DATE," +
+                                " array_agg(GENRE), MPA, likes, MPA_ID, array_agg(GENRE_ID), array_agg(DIRECTOR_ID), array_agg(DIRECTOR_NAME)" +
+                                " FROM films AS f LEFT JOIN (SELECT FILM_ID," +
+                                " GENRE, fg.GENRE_ID FROM film_genres as fg JOIN genres AS g ON g.genre_id = fg.genre_id) AS" +
+                                " G ON f.ID = G.film_id LEFT JOIN (SELECT FILM_ID , MPA, fm.MPA_ID FROM FILM_MPA as fm JOIN MPA AS" +
+                                " m ON m.mpa_id = fm.mpa_id) AS M ON f.ID = M.film_id LEFT JOIN (SELECT FILM_ID, COUNT(USER_ID) AS" +
+                                " likes FROM FILM_LIKES GROUP BY FILM_ID) AS fl ON f.ID = FL.FILM_ID" +
+                                " LEFT JOIN (SELECT FILM_ID, DIRECTOR_NAME, fd.DIRECTOR_ID FROM FILM_DIRECTORS AS fd" +
+                                " JOIN DIRECTORS AS d ON d.director_id = fd.director_id) AS D ON f.ID = D.FILM_ID" +
+                                " RIGHT JOIN (SELECT FILM_ID FROM FILM_GENRES WHERE GENRE_ID = %s) AS fi ON f.ID = fi.FILM_ID" +
+                                " GROUP BY id ORDER BY LIKES DESC" +
+                                " LIMIT %s;", genreId, count),
+                        this::mapRowToFilm);
+            } catch (DataAccessException e) {
+                log.error("Ошибка при получении списка популярных фильмов", e);
+            }
+        } else {
+            throw new ValidationException("Передан параметр в count <= 0 ");
+        }
+        return null;
+    }
+
+    public List<Film> getMostPopularFilmsByYear(Integer count, Integer year) {
+        if (count > 0) {
+            try {
+                return jdbcTemplate.query(String.format("SELECT id, NAME, DESCRIPTION, DURATION, RELEASE_DATE," +
+                                " array_agg(GENRE), MPA, likes, MPA_ID, array_agg(GENRE_ID), array_agg(DIRECTOR_ID), array_agg(DIRECTOR_NAME)" +
+                                " FROM films AS f LEFT JOIN (SELECT FILM_ID," +
+                                " GENRE, fg.GENRE_ID FROM film_genres as fg JOIN genres AS g ON g.genre_id = fg.genre_id) AS" +
+                                " G ON f.ID = G.film_id LEFT JOIN (SELECT FILM_ID , MPA, fm.MPA_ID FROM FILM_MPA as fm JOIN MPA AS" +
+                                " m ON m.mpa_id = fm.mpa_id) AS M ON f.ID = M.film_id LEFT JOIN (SELECT FILM_ID, COUNT(USER_ID) AS" +
+                                " likes FROM FILM_LIKES GROUP BY FILM_ID) AS fl ON f.ID = FL.FILM_ID" +
+                                " LEFT JOIN (SELECT FILM_ID, DIRECTOR_NAME, fd.DIRECTOR_ID FROM FILM_DIRECTORS AS fd" +
+                                " JOIN DIRECTORS AS d ON d.director_id = fd.director_id) AS D ON f.ID = D.FILM_ID" +
+                                " WHERE FORMATDATETIME(RELEASE_DATE ,'yyyy') = %s" +
+                                " GROUP BY id" +
+                                " ORDER BY LIKES DESC" +
+                                " LIMIT %s;", year, count),
+                        this::mapRowToFilm);
+            } catch (DataAccessException e) {
+                log.error("Ошибка при получении списка популярных фильмов", e);
+            }
+        } else {
+            throw new ValidationException("Передан параметр в count <= 0 ");
+        }
+        return null;
+    }
+
+    public List<Film> getMostPopularFilmsByGenreIdAndYear(Integer count, Integer year, Integer genreId) {
+        if (count > 0) {
+            try {
+                return jdbcTemplate.query(String.format("SELECT id, NAME, DESCRIPTION, DURATION, RELEASE_DATE," +
+                                " array_agg(GENRE), MPA, likes, MPA_ID, array_agg(GENRE_ID), array_agg(DIRECTOR_ID), array_agg(DIRECTOR_NAME)" +
+                                " FROM films AS f LEFT JOIN (SELECT FILM_ID," +
+                                " GENRE, fg.GENRE_ID FROM film_genres as fg JOIN genres AS g ON g.genre_id = fg.genre_id) AS" +
+                                " G ON f.ID = G.film_id LEFT JOIN (SELECT FILM_ID , MPA, fm.MPA_ID FROM FILM_MPA as fm JOIN MPA AS" +
+                                " m ON m.mpa_id = fm.mpa_id) AS M ON f.ID = M.film_id LEFT JOIN (SELECT FILM_ID, COUNT(USER_ID) AS" +
+                                " likes FROM FILM_LIKES GROUP BY FILM_ID) AS fl ON f.ID = FL.FILM_ID" +
+                                " RIGHT JOIN (SELECT FILM_ID FROM FILM_GENRES WHERE GENRE_ID = %s) AS fi ON f.ID = fi.FILM_ID" +
+                                " LEFT JOIN (SELECT FILM_ID, DIRECTOR_NAME, fd.DIRECTOR_ID FROM FILM_DIRECTORS AS fd" +
+                                " JOIN DIRECTORS AS d ON d.director_id = fd.director_id) AS D ON f.ID = D.FILM_ID" +
+                                " WHERE FORMATDATETIME(RELEASE_DATE ,'yyyy') = %s" +
+                                " GROUP BY id" +
+                                " ORDER BY LIKES DESC" +
+                                " LIMIT %s;", genreId, year, count),
+                        this::mapRowToFilm);
+            } catch (DataAccessException e) {
+                log.error("Ошибка при получении списка популярных фильмов", e);
+                return new ArrayList<>();
+            }
+        } else {
+            throw new ValidationException("Передан параметр в count <= 0 ");
+        }
+    }
+
     public Film addLike(Integer filmID, Integer userID) {
         try {
             String sqlLike = "MERGE INTO film_likes KEY(user_id, film_id) VALUES (?,?)";
