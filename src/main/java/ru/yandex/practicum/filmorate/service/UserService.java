@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.dao.UserStorage;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.util.ArrayList;
@@ -79,5 +80,10 @@ public class UserService {
         } else {
             return null;
         }
+    }
+
+    public List<Optional<Film>> getRecommendations(int id) {
+        log.info("Рекомендации найдены");
+        return storage.getRecommendations(id);
     }
 }
