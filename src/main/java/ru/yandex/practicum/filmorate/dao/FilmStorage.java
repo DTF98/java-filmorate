@@ -13,6 +13,8 @@ public interface FilmStorage extends Storage<Film> {
 
     List<Film> getMostPopularFilms(Integer count);
 
+    List<Film> getSearchedFilms(String query, List<String> by);
+
     List<Film> getMostPopularFilmsByGenreIdAndYear(Integer count, Integer year, Integer genreId);
 
     List<Film> getMostPopularFilmsByYear(Integer count, Integer year);
@@ -22,6 +24,4 @@ public interface FilmStorage extends Storage<Film> {
     List<Film> getSortedLikesListOfDirectorsFilms(Integer directorId);
 
     List<Film> getSortedYearListOfDirectorsFilms(Integer directorId);
-
-    List<Film> getSearchedFilms(String query, List<String> by);
 }
