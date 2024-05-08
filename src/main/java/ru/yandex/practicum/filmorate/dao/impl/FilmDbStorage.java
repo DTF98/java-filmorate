@@ -22,6 +22,7 @@ import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -315,6 +316,9 @@ public class FilmDbStorage implements FilmStorage {
                 Optional<Film> check = getById(filmID);
                 if (check.isPresent()) {
                     log.info("Добавлен лайк фильму id = {}, пользователем id = {}", filmID, userID);
+                    jdbcTemplate.update("INSERT INTO USER_EVENT_FEED (user_id, event_type, operation, entity_id, time_stamp) VALUES (?, ?, ?, ?, ?)",
+                            userID, "LIKE", "ADD", filmID, Instant.now().toEpochMilli());
+                    log.info("Добавлено в историю добавление лайка пользователем id = {} фильму id = {}", userID, filmID);
                     return check.get();
                 }
             } else {
@@ -331,6 +335,9 @@ public class FilmDbStorage implements FilmStorage {
             String sqlFL = String.format("delete from film_likes where film_id = %s and user_id = %s", filmID, userID);
             if (jdbcTemplate.update(sqlFL) > 0) {
                 log.info("Удален лайк пользователя id = {} для фильма id = {}", userID, filmID);
+                jdbcTemplate.update("INSERT INTO USER_EVENT_FEED (user_id, event_type, operation, entity_id, time_stamp) VALUES (?, ?, ?, ?, ?)",
+                        userID, "LIKE", "REMOVE", filmID, Instant.now().toEpochMilli());
+                log.info("Добавлено в историю удаление лайка пользователя id = {} у фильма id = {}", userID, filmID);
                 return filmID;
             } else {
                 throw new NotFoundException(String.format("Фильм по id = %s не найден!", filmID));
