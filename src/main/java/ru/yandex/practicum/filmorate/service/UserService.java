@@ -7,6 +7,7 @@ import ru.yandex.practicum.filmorate.dao.UserStorage;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.model.UserFeed;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -46,29 +47,30 @@ public class UserService {
         }
     }
 
-    public List<User> getUsers() {
+    public List<User> get() {
         return new ArrayList<>(storage.get());
     }
 
-    public User setUser(User user) {
+    public User add(User user) {
         User newUser = storage.add(user);
         log.info(String.format("Добавлен пользователь: {%s}", newUser));
         return user;
     }
 
-    public User updateUser(User user) {
+    public User update(User user) {
         User newUser = storage.update(user);
         log.info(String.format("Обновлён пользователь: {%s}", newUser));
         return newUser;
     }
 
-    public void deleteUser(Integer userID) {
+    public boolean delete(Integer userID) {
         log.info("Удаление юзера id = {}", userID);
-        boolean delUser = storage.delete(userID);
-        if (delUser) {
-            log.info("Удален юзера id = {}", userID);
+        boolean isDelete = storage.delete(userID);
+        if (!isDelete) {
+            throw new NotFoundException(String.format("Пользователь по id = {%s} не найдеен", userID));
         } else {
-            throw new NotFoundException("Не найдено по ИД");
+            log.info("Удален пользователь id = {}", userID);
+            return true;
         }
     }
 
@@ -83,7 +85,12 @@ public class UserService {
     }
 
     public List<Optional<Film>> getRecommendations(int id) {
-        log.info("Рекомендации найдены");
+        log.info("Полученние рекомендаций по id = {}", id);
         return storage.getRecommendations(id);
+    }
+
+    public List<UserFeed> getFeed(Integer userId) {
+        log.info("Получение ленты событий для пользователя по id = {}", userId);
+        return storage.getFeedByUserId(userId);
     }
 }

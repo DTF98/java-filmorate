@@ -7,12 +7,12 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.dao.ReviewStorage;
-
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Review;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.Instant;
 import java.util.*;
 
 @Component
@@ -29,7 +29,11 @@ public class ReviewDbStorageImpl implements ReviewStorage {
                     .usingGeneratedKeyColumns("id");
             int reviewId = simpleJdbcInsert.executeAndReturnKey(toReviewMap(review)).intValue();
             review.setId(reviewId);
+            log.info("Отзыв по id = {} успешно добавлен", review.getId());
 
+            String sql = "INSERT INTO USER_EVENT_FEED (user_id, event_type, operation, entity_id, time_stamp) VALUES (?, ?, ?, ?, ?)";
+            jdbcTemplate.update(sql, review.getUserId(), "REVIEW", "ADD", review.getId(), Instant.now().toEpochMilli());
+            log.info("Добавлено в историю создание отзыва пользователем id = {} фильму id = {}", review.getId(), review.getFilmId());
 
         } catch (Exception e) {
             log.error("Error in add review", e);
@@ -45,10 +49,14 @@ public class ReviewDbStorageImpl implements ReviewStorage {
                     " CONTENT = ?, IS_POSITIVE = ?" +
                     " where ID = ?";
 
-            jdbcTemplate.update(sqlQuery,
-                    review.getContent(),
-                    review.getIsPositive(),
-                    review.getId());
+            if (jdbcTemplate.update(sqlQuery, review.getContent(), review.getIsPositive(), review.getId()) > 0) {
+                log.info("Отзыв по id = {} успешно обновлен", review.getId());
+                Review updateReview = getById(review.getId()).get();
+                String sql = "INSERT INTO USER_EVENT_FEED (user_id, event_type, operation, entity_id, time_stamp) VALUES (?, ?, ?, ?, ?)";
+                jdbcTemplate.update(sql, updateReview.getUserId(), "REVIEW", "UPDATE", updateReview.getId(), Instant.now().toEpochMilli());
+                log.info("Добавлено в историю обновление отзыва пользователем id = {} фильму id = {}", review.getId(), review.getFilmId());
+            }
+
         } catch (DataAccessException e) {
             log.error("Error in update review", e);
         }
@@ -59,17 +67,21 @@ public class ReviewDbStorageImpl implements ReviewStorage {
     @Override
     public int delete(int id) {
         try {
-            String sqlQuery = "delete from REVIEW where ID = ?;";
+            Optional<Review> delete = getById(id);
+            if (delete.isPresent()) {
+                String sqlQuery = "delete from REVIEW where ID = ?;";
+                jdbcTemplate.update(sqlQuery, id);
+                log.info("Отзыв успешно удален");
 
-            boolean isSuccess = jdbcTemplate.update(sqlQuery, id) > 0;
-
-            if (!isSuccess) {
+                String sql = "INSERT INTO USER_EVENT_FEED (user_id, event_type, operation, entity_id, time_stamp) VALUES (?, ?, ?, ?, ?)";
+                jdbcTemplate.update(sql, delete.get().getUserId(), "REVIEW", "REMOVE", delete.get().getId(), Instant.now().toEpochMilli());
+                log.info("Добавлено в историю удаление отзыва пользователем id = {} фильму id = {}", delete.get().getId(), delete.get().getFilmId());
+            } else {
                 throw new NotFoundException("Отзыв не найден!");
             }
         } catch (DataAccessException e) {
             log.error("Error in delete review", e);
         }
-
         return id;
     }
 
@@ -181,5 +193,4 @@ public class ReviewDbStorageImpl implements ReviewStorage {
 
         return values;
     }
-
 }

@@ -2,7 +2,6 @@ package ru.yandex.practicum.filmorate.controller;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.User;
@@ -25,7 +24,7 @@ public class UserController {
 
     @GetMapping("/users")
     public ResponseEntity<?> findAll() {
-        return respondSuccessList(service.getUsers());
+        return respondSuccessList(service.get());
     }
 
     @GetMapping("/users/{id}")
@@ -54,12 +53,12 @@ public class UserController {
 
     @PostMapping(value = "/users")
     public ResponseEntity<?> create(@Valid @RequestBody User user) {
-        return respondSuccess(service.setUser(user));
+        return respondSuccess(service.add(user));
     }
 
     @PutMapping(value = "/users")
     public ResponseEntity<?> update(@Valid @RequestBody User user) {
-        return respondSuccess(service.updateUser(user));
+        return respondSuccess(service.update(user));
     }
 
     @PutMapping("/users/{id}/friends/{friendId}")
@@ -69,8 +68,13 @@ public class UserController {
     }
 
     @DeleteMapping("/users/{id}")
-    public ResponseEntity<?> deleteUser(@PathVariable Integer id) {
-        return respondSuccess(HttpStatus.OK);
+    public ResponseEntity<?> delete(@PathVariable Integer id) {
+        return respondSuccess(service.delete(id));
+    }
+
+    @GetMapping("/users/{id}/feed")
+    public ResponseEntity<?> getFeedByUser(@PathVariable Integer id) {
+        return respondSuccess(service.getFeed(id));
     }
 
     @GetMapping("/users/{id}/recommendations")

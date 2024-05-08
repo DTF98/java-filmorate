@@ -13,11 +13,18 @@ import ru.yandex.practicum.filmorate.dao.UserStorage;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.model.UserFeed;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.*;
 
 @Slf4j
@@ -80,10 +87,15 @@ public class UserDbStorage implements UserStorage {
             if (!user1Friends.next()) {
                 jdbcTemplate.update("INSERT INTO USER_FRIENDS (user_id, friend_id) VALUES (?, ?)",
                         user, friend);
+                log.info("Пользователь id = {} добавил в друзья пользователя id = {}", user, friend);
+                jdbcTemplate.update("INSERT INTO USER_EVENT_FEED (user_id, event_type, operation, entity_id, time_stamp) VALUES (?, ?, ?, ?, ?)",
+                        user, "FRIEND", "ADD", friend, Instant.now().toEpochMilli());
+                log.info("Добавлено в историю добавление друга у пользователя id = {}", user);
             }
             if (user2Friends.next()) {
                 jdbcTemplate.update("UPDATE USER_FRIENDS SET status = ? WHERE user_id IN (?, ?) AND friend_id IN (?, ?)",
                         true, user, friend, user, friend);
+                log.info("Дружба у пользователей id = {} и id = {} подтверждена", user, friend);
             }
             Optional<User> userBuf = getById(user);
             if (userBuf.isPresent()) {
@@ -96,15 +108,18 @@ public class UserDbStorage implements UserStorage {
         }
     }
 
-    @Override
     public Integer deleteFriend(Integer user, Integer friend) {
         if (isExistById(user) && isExistById(friend)) {
             try {
                 int updated = jdbcTemplate.update("DELETE FROM USER_FRIENDS WHERE user_id = ? AND friend_id = ?",
                         user, friend);
                 if (updated > 0) {
+                    log.info("Пользователь id = {} удалил из друзей пользователя id = {}", user, friend);
                     jdbcTemplate.update("UPDATE USER_FRIENDS SET status = ? WHERE user_id = ? AND friend_id = ?",
                             false, friend, user);
+                    jdbcTemplate.update("INSERT INTO USER_EVENT_FEED (user_id, event_type, operation, entity_id, time_stamp) VALUES (?, ?, ?, ?, ?)",
+                            user, "FRIEND", "REMOVE", friend, Instant.now().toEpochMilli());
+                    log.info("Добавлено в историю удаление друга у пользователя id = {}", user);
                 }
                 return friend;
             } catch (DataAccessException e) {
@@ -117,9 +132,9 @@ public class UserDbStorage implements UserStorage {
     }
 
     public boolean delete(Integer id) {
-        String sqlQuery = "DELETE FROM users WHERE ID= ?";
         deleteFriendsLinks(id);
         deleteLikesLinks(id);
+        String sqlQuery = "DELETE FROM users WHERE ID= ?";
         return jdbcTemplate.update(sqlQuery, id) > 0;
     }
 
@@ -131,7 +146,6 @@ public class UserDbStorage implements UserStorage {
         jdbcTemplate.update("DELETE FROM FILM_LIKES WHERE user_id = ?", userId);
     }
 
-    @Override
     public List<User> getFriends(Integer userId) {
         if (isExistById(userId)) {
             try {
@@ -146,22 +160,6 @@ public class UserDbStorage implements UserStorage {
         }
     }
 
-    private User mapRowToUser(ResultSet resultSet, int rowNum) throws SQLException {
-        return User.builder()
-                .id(resultSet.getInt("id"))
-                .email(resultSet.getString("email"))
-                .login(resultSet.getString("login"))
-                .name(resultSet.getString("name"))
-                .birthday(LocalDate.parse(resultSet.getString("birthday")))
-                .build();
-    }
-
-    private boolean isExistById(Integer id) {
-        String sqlQuery = "SELECT EXISTS(SELECT 1 FROM USERS WHERE ID = ?)";
-        return Boolean.TRUE.equals(jdbcTemplate.queryForObject(sqlQuery, Boolean.class, id));
-    }
-
-    @Override
     public List<Optional<Film>> getRecommendations(int id) {
         SqlRowSet userLike = jdbcTemplate.queryForRowSet("select film_id from film_likes where user_id=?", id);
         List<Integer> currentFilmIdsUser = new ArrayList<>();
@@ -221,7 +219,6 @@ public class UserDbStorage implements UserStorage {
             return films;
         }
     }
-
 
     public Optional<User> getUserWithMaxCommonLikes(int userId) {
         List<Integer> userIds = new ArrayList<>();
@@ -309,5 +306,40 @@ public class UserDbStorage implements UserStorage {
         }
 
         return max.getKey();
+    }
+
+    public List<UserFeed> getFeedByUserId(Integer userId) {
+        if (!isExistById(userId)) {
+            throw new NotFoundException(String.format("Отзывов по id = %s не найдено!", userId));
+        }
+        return jdbcTemplate.query(String.format("SELECT * FROM USER_EVENT_FEED WHERE USER_ID = %s", userId),
+                this::mapRowToUserFeed);
+    }
+
+    private UserFeed mapRowToUserFeed(ResultSet resultSet, int rowNum) throws SQLException {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSSSS");
+        return UserFeed.builder()
+                .userId(resultSet.getInt("user_id"))
+                .eventId(resultSet.getInt("event_id"))
+                .entityId(resultSet.getInt("entity_id"))
+                .operation(resultSet.getString("operation"))
+                .eventType(resultSet.getString("event_type"))
+                .timestamp(resultSet.getLong("time_stamp"))
+                .build();
+    }
+
+    private User mapRowToUser(ResultSet resultSet, int rowNum) throws SQLException {
+        return User.builder()
+                .id(resultSet.getInt("id"))
+                .email(resultSet.getString("email"))
+                .login(resultSet.getString("login"))
+                .name(resultSet.getString("name"))
+                .birthday(LocalDate.parse(resultSet.getString("birthday")))
+                .build();
+    }
+
+    private boolean isExistById(Integer id) {
+        String sqlQuery = "SELECT EXISTS(SELECT 1 FROM USERS WHERE ID = ?)";
+        return Boolean.TRUE.equals(jdbcTemplate.queryForObject(sqlQuery, Boolean.class, id));
     }
 }
