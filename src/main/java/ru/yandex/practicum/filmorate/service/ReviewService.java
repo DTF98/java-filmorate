@@ -30,8 +30,8 @@ public class ReviewService {
     }
 
     public Review add(Review review) {
-        filmService.getById(review.getFilmId().intValue()); // если фильма нет, то метод пробросит ошибку
-        userService.getUserById(review.getUserId().intValue()); // если пользователя нет, то метод пробросит ошибку
+        filmService.getById(review.getFilmId()); // если фильма нет, то метод пробросит ошибку
+        userService.getUserById(review.getUserId()); // если пользователя нет, то метод пробросит ошибку
 
         return reviewStorage.add(review);
     }
@@ -59,21 +59,30 @@ public class ReviewService {
         reviewLikeStorage.deleteLikes(reviewId);
     }
 
-    public void deleteReviewLike(int reviewId, int userId) {
-        reviewLikeStorage.deleteLike(reviewId, userId);
+    public boolean deleteReviewLike(int reviewId, int userId) {
+        return reviewLikeStorage.deleteLike(reviewId, userId);
     }
 
-    public void deleteReviewDislike(int reviewId, int userId) {
-        reviewLikeStorage.deleteDislike(reviewId, userId);
+    public boolean deleteReviewDislike(int reviewId, int userId) {
+        return reviewLikeStorage.deleteDislike(reviewId, userId);
     }
 
-    public Collection<Review> getAll() {
-        return reviewStorage.getAll();
+    public Collection<Review> getAll(Integer filmId, Integer count) {
+        if (filmId == 0) {
+            log.info("Получить все отзывы");
+            log.info("Текущее количество всех отзывов: {}", getCount());
+            return reviewStorage.getAll();
+        } else {
+            log.info("Получить все отзывы по фильму - {}, количество {}", filmId, count);
+            Collection<Review> reviews = getByFilmId(filmId, count);
+            log.info("Текущее количество всех отзывов на фильм: {}", reviews.size());
+            return reviews;
+        }
     }
 
     /**
      * Получить все отзывы к фильму по id фильма,
-     * если указан count, получить только выбранное количество отзывово по фильму
+     * если указан count, получить только выбранное количество отзывов по фильму
      * в порядке от самых полезных к самым бесполезным
      */
     public Collection<Review> getByFilmId(int filmId, int count) {

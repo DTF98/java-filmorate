@@ -10,7 +10,8 @@ import ru.yandex.practicum.filmorate.dao.ReviewLikeStorage;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.ReviewLike;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 @Component
 @RequiredArgsConstructor
@@ -20,7 +21,6 @@ public class ReviewLikeDbStorageImpl implements ReviewLikeStorage {
 
     @Override
     public Integer addLike(Integer reviewId, Integer userId) {
-        Integer reviewLikeId = null;
         try {
 
             SimpleJdbcInsert simpleJdbcInsert = new SimpleJdbcInsert(jdbcTemplate)
@@ -28,19 +28,19 @@ public class ReviewLikeDbStorageImpl implements ReviewLikeStorage {
                     .usingGeneratedKeyColumns("id")
                     .usingColumns("review_id", "user_id", "like_type");
 
-            reviewLikeId = simpleJdbcInsert.executeAndReturnKey(
+            Integer reviewLikeId = simpleJdbcInsert.executeAndReturnKey(
                     toReviewLikeMap(new ReviewLike(reviewId, userId, true))).intValue();
+            log.info("Dislike отзыву успешно поставлен");
+            return reviewLikeId;
 
         } catch (Exception e) {
             log.error("Error in addLike", e);
         }
-
-        return reviewLikeId;
+        return null;
     }
 
     @Override
     public Integer addDislike(Integer reviewId, Integer userId) {
-        Integer reviewDislikeId = null;
         try {
 
             SimpleJdbcInsert simpleJdbcInsert = new SimpleJdbcInsert(jdbcTemplate)
@@ -48,14 +48,15 @@ public class ReviewLikeDbStorageImpl implements ReviewLikeStorage {
                     .usingGeneratedKeyColumns("id")
                     .usingColumns("review_id", "user_id", "like_type");
 
-            reviewDislikeId = simpleJdbcInsert.executeAndReturnKey(
+            Integer reviewDislikeId = simpleJdbcInsert.executeAndReturnKey(
                     toReviewLikeMap(new ReviewLike(reviewId, userId, true))).intValue();
+            log.info("Like отзыву успешно поставлен");
+            return reviewDislikeId;
 
         } catch (Exception e) {
             log.error("Error in addDislike", e);
         }
-
-        return reviewDislikeId;
+        return null;
     }
 
     /**
@@ -81,7 +82,7 @@ public class ReviewLikeDbStorageImpl implements ReviewLikeStorage {
      * Delete review like from user
      */
     @Override
-    public void deleteLike(Integer reviewId, int userId) {
+    public boolean deleteLike(Integer reviewId, int userId) {
         try {
             String sqlQuery = "DELETE FROM REVIEW_LIKE" +
                     " WHERE REVIEW_ID = ? " +
@@ -93,16 +94,19 @@ public class ReviewLikeDbStorageImpl implements ReviewLikeStorage {
             if (!isSuccess) {
                 throw new NotFoundException("Лайк отзыва не удален!");
             }
+            log.info("Лайк к отзыву успешно удален");
+            return true;
         } catch (DataAccessException e) {
             log.error("Error in delete review like", e);
         }
+        return false;
     }
 
     /**
      * Delete review dislike from user
      */
     @Override
-    public void deleteDislike(Integer reviewId, int userId) {
+    public boolean deleteDislike(Integer reviewId, int userId) {
         try {
             String sqlQuery = "DELETE FROM REVIEW_LIKE" +
                     " WHERE REVIEW_ID = ? " +
@@ -114,9 +118,12 @@ public class ReviewLikeDbStorageImpl implements ReviewLikeStorage {
             if (!isSuccess) {
                 throw new NotFoundException("Дизлайк отзыва не удален!");
             }
+            log.info("Дизлайк к отзыву успешно удален");
+            return true;
         } catch (DataAccessException e) {
             log.error("Error in delete review like", e);
         }
+        return false;
     }
 
     public Map<String, Object> toReviewLikeMap(ReviewLike reviewLike) {

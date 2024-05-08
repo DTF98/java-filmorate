@@ -8,8 +8,8 @@ public interface ReviewLikeStorage {
 
     Integer addDislike(Integer reviewId, Integer userId);
 
-    void deleteLike(Integer reviewId, int userId);
+    boolean deleteLike(Integer reviewId, int userId);
 
-    void deleteDislike(Integer reviewId, int userId);
+    boolean deleteDislike(Integer reviewId, int userId);
 
 }
