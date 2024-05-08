@@ -57,6 +57,11 @@ public class FilmService {
         }
     }
 
+    public List<Film> searchFilmsAndDirectors(String query, List<String> by) {
+        log.info("Получение списка фильмов по названию фильма и/или режиссеру");
+        return filmStorage.getSearchedFilms(query, by);
+    }
+
     public List<Film> getAll() {
         log.info("Получение списка всех фильмов");
         return new ArrayList<>(filmStorage.get());
