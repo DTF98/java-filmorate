@@ -317,7 +317,6 @@ public class UserDbStorage implements UserStorage {
     }
 
     private UserFeed mapRowToUserFeed(ResultSet resultSet, int rowNum) throws SQLException {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSSSS");
         return UserFeed.builder()
                 .userId(resultSet.getInt("user_id"))
                 .eventId(resultSet.getInt("event_id"))
