@@ -6,8 +6,6 @@ import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.NonFinal;
 import ru.yandex.practicum.filmorate.validation.ValidateDate;
-import ru.yandex.practicum.filmorate.validation.ValidateGenre;
-import ru.yandex.practicum.filmorate.validation.ValidateMPA;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
@@ -38,15 +36,11 @@ public class Film {
     @Positive
     private Integer duration;
 
-    @NotNull
     @NonFinal
-    @ValidateGenre("Номер жанра не должен быть больше 6 и меньше 1")
     private Set<Genre> genres;
 
-    @ValidateMPA("Номер рейтинга не должен быть больше 5 и меньше 1")
     private MPA mpa;
 
-    @NotNull
     @NonFinal
     private Set<Director> directors;
 

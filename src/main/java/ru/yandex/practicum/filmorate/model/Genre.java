@@ -12,8 +12,6 @@ import javax.validation.constraints.Min;
 @ToString
 @EqualsAndHashCode
 public class Genre {
-    @Min(value = 1, message = "Номер жанра не должен быть меньше 1")
-    @Max(value = 6, message = "Номер жанра не должен быть больше 6")
     private Integer id;
     private String name;
 }

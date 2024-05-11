@@ -2,17 +2,13 @@ package ru.yandex.practicum.filmorate.dao.impl;
 
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.SingleColumnRowMapper;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.dao.FilmStorage;
-import ru.yandex.practicum.filmorate.exception.NotFoundException;
-import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
@@ -22,10 +18,11 @@ import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.time.Instant;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static ru.yandex.practicum.filmorate.constant.ConstantError.ERROR_ENTITY_FILM;
 
 @Component
 @Slf4j
@@ -34,73 +31,54 @@ public class FilmDbStorage implements FilmStorage {
     private final JdbcTemplate jdbcTemplate;
 
     public List<Film> get() {
-        try {
-            return jdbcTemplate.query("SELECT id, NAME, DESCRIPTION, DURATION, RELEASE_DATE, array_agg(GENRE), MPA, " +
-                    "MPA_ID, array_agg(GENRE_ID), array_agg(DIRECTOR_ID), array_agg(DIRECTOR_NAME) " +
-                    "FROM films AS f " +
-                    "LEFT JOIN (SELECT FILM_ID, GENRE, fg.GENRE_ID FROM film_genres as fg " +
-                    "JOIN genres AS g ON g.genre_id = fg.genre_id) AS G ON f.ID = G.film_id " +
-                    "LEFT JOIN (SELECT FILM_ID , MPA, fm.MPA_ID FROM FILM_MPA as fm " +
-                    "JOIN MPA AS m ON m.mpa_id = fm.mpa_id) AS M ON f.ID = M.film_id " +
-                    "LEFT JOIN (SELECT FILM_ID, DIRECTOR_NAME, fd.DIRECTOR_ID FROM FILM_DIRECTORS AS fd " +
-                    "JOIN DIRECTORS AS d ON d.director_id = fd.director_id) AS D ON f.ID = D.FILM_ID " +
-                    "GROUP BY id;", this::mapRowToFilm);
-        } catch (DataAccessException e) {
-            log.error("Ошибка при получении списка всех фильмов", e);
-            return null;
-        }
+        return jdbcTemplate.query("SELECT id, NAME, DESCRIPTION, DURATION, RELEASE_DATE, array_agg(GENRE), MPA, " +
+                "MPA_ID, array_agg(GENRE_ID), array_agg(DIRECTOR_ID), array_agg(DIRECTOR_NAME) " +
+                "FROM films AS f " +
+                "LEFT JOIN (SELECT FILM_ID, GENRE, fg.GENRE_ID FROM film_genres as fg " +
+                "JOIN genres AS g ON g.genre_id = fg.genre_id) AS G ON f.ID = G.film_id " +
+                "LEFT JOIN (SELECT FILM_ID , MPA, fm.MPA_ID FROM FILM_MPA as fm " +
+                "JOIN MPA AS m ON m.mpa_id = fm.mpa_id) AS M ON f.ID = M.film_id " +
+                "LEFT JOIN (SELECT FILM_ID, DIRECTOR_NAME, fd.DIRECTOR_ID FROM FILM_DIRECTORS AS fd " +
+                "JOIN DIRECTORS AS d ON d.director_id = fd.director_id) AS D ON f.ID = D.FILM_ID " +
+                "GROUP BY id;", this::mapRowToFilm);
     }
 
     public Optional<Film> getById(Integer id) {
-        try {
-            return Optional.ofNullable(jdbcTemplate.queryForObject("SELECT id, NAME, DESCRIPTION, DURATION, RELEASE_DATE, " +
-                    "array_agg(GENRE), MPA, MPA_ID, array_agg(GENRE_ID), array_agg(DIRECTOR_ID), array_agg(DIRECTOR_NAME) " +
-                    "FROM films AS f " +
-                    "LEFT JOIN (SELECT FILM_ID, GENRE, fg.GENRE_ID FROM film_genres as fg " +
-                    "JOIN genres AS g ON g.genre_id = fg.genre_id) AS G ON f.ID = G.film_id " +
-                    "LEFT JOIN (SELECT FILM_ID , MPA, fm.MPA_ID FROM FILM_MPA as fm " +
-                    "JOIN MPA AS m ON m.mpa_id = fm.mpa_id) AS M ON f.ID = M.film_id " +
-                    "LEFT JOIN (SELECT FILM_ID, DIRECTOR_NAME, fd.DIRECTOR_ID FROM FILM_DIRECTORS AS fd " +
-                    "JOIN DIRECTORS AS d ON d.director_id = fd.director_id) AS D ON f.ID = D.FILM_ID " +
-                    "where id = ? " +
-                    "GROUP BY id;", this::mapRowToFilm, id));
-        } catch (DataAccessException e) {
-            throw new NotFoundException(String.format("Фильм по id = %s не найден!", id));
-        }
+        return Optional.ofNullable(jdbcTemplate.queryForObject("SELECT id, NAME, DESCRIPTION, DURATION, RELEASE_DATE, " +
+                "array_agg(GENRE), MPA, MPA_ID, array_agg(GENRE_ID), array_agg(DIRECTOR_ID), array_agg(DIRECTOR_NAME) " +
+                "FROM films AS f " +
+                "LEFT JOIN (SELECT FILM_ID, GENRE, fg.GENRE_ID FROM film_genres as fg " +
+                "JOIN genres AS g ON g.genre_id = fg.genre_id) AS G ON f.ID = G.film_id " +
+                "LEFT JOIN (SELECT FILM_ID , MPA, fm.MPA_ID FROM FILM_MPA as fm " +
+                "JOIN MPA AS m ON m.mpa_id = fm.mpa_id) AS M ON f.ID = M.film_id " +
+                "LEFT JOIN (SELECT FILM_ID, DIRECTOR_NAME, fd.DIRECTOR_ID FROM FILM_DIRECTORS AS fd " +
+                "JOIN DIRECTORS AS d ON d.director_id = fd.director_id) AS D ON f.ID = D.FILM_ID " +
+                "where id = ? " +
+                "GROUP BY id;", this::mapRowToFilm, id));
     }
 
     public List<Film> getMostPopularFilms(Integer count) {
-        if (count > 0) {
-            try {
-                return jdbcTemplate.query(String.format("SELECT id, NAME, DESCRIPTION, DURATION, RELEASE_DATE, " +
-                                "array_agg(GENRE), MPA, MPA_ID, array_agg(GENRE_ID), array_agg(DIRECTOR_ID), array_agg(DIRECTOR_NAME) " +
-                                "FROM films AS f " +
-                                "LEFT JOIN (SELECT FILM_ID, GENRE, fg.GENRE_ID FROM film_genres as fg " +
-                                "JOIN genres AS g ON g.genre_id = fg.genre_id) AS G ON f.ID = G.film_id " +
-                                "LEFT JOIN (SELECT FILM_ID , MPA, fm.MPA_ID FROM FILM_MPA as fm " +
-                                "JOIN MPA AS m ON m.mpa_id = fm.mpa_id) AS M ON f.ID = M.film_id " +
-                                "LEFT JOIN (SELECT FILM_ID, COUNT(USER_ID) AS likes " +
-                                "FROM FILM_LIKES GROUP BY FILM_ID) AS fl ON f.ID = FL.FILM_ID " +
-                                "LEFT JOIN (SELECT FILM_ID, DIRECTOR_NAME, fd.DIRECTOR_ID FROM FILM_DIRECTORS AS fd " +
-                                "JOIN DIRECTORS AS d ON d.director_id = fd.director_id) AS D ON f.ID = D.FILM_ID " +
-                                "GROUP BY id " +
-                                "ORDER BY LIKES DESC" +
-                                " LIMIT %s;", count),
-                        this::mapRowToFilm);
-            } catch (DataAccessException e) {
-                log.error("Ошибка при получении списка популярных фильмов", e);
-            }
-        } else {
-            throw new ValidationException("Передан параметр в count <= 0 ");
-        }
-        return null;
+        return jdbcTemplate.query(String.format("SELECT id, NAME, DESCRIPTION, DURATION, RELEASE_DATE, " +
+                        "array_agg(GENRE), MPA, MPA_ID, array_agg(GENRE_ID), array_agg(DIRECTOR_ID), array_agg(DIRECTOR_NAME) " +
+                        "FROM films AS f " +
+                        "LEFT JOIN (SELECT FILM_ID, GENRE, fg.GENRE_ID FROM film_genres as fg " +
+                        "JOIN genres AS g ON g.genre_id = fg.genre_id) AS G ON f.ID = G.film_id " +
+                        "LEFT JOIN (SELECT FILM_ID , MPA, fm.MPA_ID FROM FILM_MPA as fm " +
+                        "JOIN MPA AS m ON m.mpa_id = fm.mpa_id) AS M ON f.ID = M.film_id " +
+                        "LEFT JOIN (SELECT FILM_ID, COUNT(USER_ID) AS likes " +
+                        "FROM FILM_LIKES GROUP BY FILM_ID) AS fl ON f.ID = FL.FILM_ID " +
+                        "LEFT JOIN (SELECT FILM_ID, DIRECTOR_NAME, fd.DIRECTOR_ID FROM FILM_DIRECTORS AS fd " +
+                        "JOIN DIRECTORS AS d ON d.director_id = fd.director_id) AS D ON f.ID = D.FILM_ID " +
+                        "GROUP BY id " +
+                        "ORDER BY LIKES DESC" +
+                        " LIMIT %s;", count),
+                this::mapRowToFilm);
     }
 
     public List<Film> getSearchedFilms(String query, List<String> by) {
         String maskedQuery = "%" + query + "%";
         boolean isTitle = by.contains("title");
         boolean isDirector = by.contains("director");
-        try {
             String sqlSearch = "SELECT id, NAME, DESCRIPTION, DURATION, RELEASE_DATE, " +
                     "array_agg(GENRE), MPA, MPA_ID, array_agg(GENRE_ID), array_agg(DIRECTOR_ID), " +
                     "array_agg(DIRECTOR_NAME) " +
@@ -125,81 +103,54 @@ public class FilmDbStorage implements FilmStorage {
                 preparedStatement.setString(4, maskedQuery);
                 return preparedStatement;
             }, this::mapRowToFilm);
-        } catch (DataAccessException e) {
-            log.error("Ошибка при поиске фильмов", e);
-        }
-        return new ArrayList<>();
     }
 
     public List<Film> getSortedLikesListOfDirectorsFilms(Integer directorId) {
-        try {
-            List<Film> like = jdbcTemplate.query(String.format("SELECT id, NAME, DESCRIPTION, DURATION, RELEASE_DATE, " +
-                            "array_agg(GENRE), MPA, MPA_ID, array_agg(GENRE_ID), array_agg(DIRECTOR_ID), array_agg(DIRECTOR_NAME) " +
-                            "FROM films AS f " +
-                            "LEFT JOIN (SELECT FILM_ID, GENRE, fg.GENRE_ID FROM film_genres as fg " +
-                            "JOIN genres AS g ON g.genre_id = fg.genre_id) AS G ON f.ID = G.film_id " +
-                            "LEFT JOIN (SELECT FILM_ID , MPA, fm.MPA_ID FROM FILM_MPA as fm " +
-                            "JOIN MPA AS m ON m.mpa_id = fm.mpa_id) AS M ON f.ID = M.film_id " +
-                            "LEFT JOIN (SELECT FILM_ID, COUNT(USER_ID) AS likes " +
-                            "FROM FILM_LIKES GROUP BY FILM_ID) AS fl ON f.ID = FL.FILM_ID " +
-                            "RIGHT JOIN (SELECT FILM_ID, DIRECTOR_NAME, fd.DIRECTOR_ID FROM FILM_DIRECTORS AS fd " +
-                            "JOIN DIRECTORS AS d ON d.director_id = fd.director_id WHERE fd.DIRECTOR_ID = %s) AS D ON f.ID = D.FILM_ID " +
-                            "GROUP BY id " +
-                            "ORDER BY LIKES DESC;", directorId),
-                    this::mapRowToFilm);
-            if (like.isEmpty()) {
-                throw new NotFoundException("Режисер или его фильмы не найдены");
-            } else {
-                log.info("Получен список фильмов режиссера id = {} отсортированных по лайкам", directorId);
-                return like;
-            }
-        } catch (DataAccessException e) {
-            log.error("Ошибка при получении списка фильмов режиссера id = {} отсортированных по колличеству лайков", directorId);
-        }
-        return null;
+        return jdbcTemplate.query(String.format("SELECT id, NAME, DESCRIPTION, DURATION, RELEASE_DATE, " +
+                        "array_agg(GENRE), MPA, MPA_ID, array_agg(GENRE_ID), array_agg(DIRECTOR_ID), array_agg(DIRECTOR_NAME) " +
+                        "FROM films AS f " +
+                        "LEFT JOIN (SELECT FILM_ID, GENRE, fg.GENRE_ID FROM film_genres as fg " +
+                        "JOIN genres AS g ON g.genre_id = fg.genre_id) AS G ON f.ID = G.film_id " +
+                        "LEFT JOIN (SELECT FILM_ID , MPA, fm.MPA_ID FROM FILM_MPA as fm " +
+                        "JOIN MPA AS m ON m.mpa_id = fm.mpa_id) AS M ON f.ID = M.film_id " +
+                        "LEFT JOIN (SELECT FILM_ID, COUNT(USER_ID) AS likes " +
+                        "FROM FILM_LIKES GROUP BY FILM_ID) AS fl ON f.ID = FL.FILM_ID " +
+                        "RIGHT JOIN (SELECT FILM_ID, DIRECTOR_NAME, fd.DIRECTOR_ID FROM FILM_DIRECTORS AS fd " +
+                        "JOIN DIRECTORS AS d ON d.director_id = fd.director_id WHERE fd.DIRECTOR_ID = %s) AS D ON f.ID = D.FILM_ID " +
+                        "GROUP BY id " +
+                        "ORDER BY LIKES DESC;", directorId),
+                this::mapRowToFilm);
     }
 
     public List<Film> getSortedYearListOfDirectorsFilms(Integer directorId) {
-        try {
-            List<Film> year = jdbcTemplate.query(String.format("SELECT id, NAME, DESCRIPTION, DURATION, RELEASE_DATE, " +
-                            "array_agg(GENRE), MPA, MPA_ID, array_agg(GENRE_ID), array_agg(DIRECTOR_ID), array_agg(DIRECTOR_NAME) " +
-                            "FROM films AS f " +
-                            "LEFT JOIN (SELECT FILM_ID, GENRE, fg.GENRE_ID FROM film_genres as fg " +
-                            "JOIN genres AS g ON g.genre_id = fg.genre_id) AS G ON f.ID = G.film_id " +
-                            "LEFT JOIN (SELECT FILM_ID , MPA, fm.MPA_ID FROM FILM_MPA as fm " +
-                            "JOIN MPA AS m ON m.mpa_id = fm.mpa_id) AS M ON f.ID = M.film_id " +
-                            "LEFT JOIN (SELECT FILM_ID, COUNT(USER_ID) AS likes " +
-                            "FROM FILM_LIKES GROUP BY FILM_ID) AS fl ON f.ID = FL.FILM_ID " +
-                            "RIGHT JOIN (SELECT FILM_ID, DIRECTOR_NAME, fd.DIRECTOR_ID FROM FILM_DIRECTORS AS fd " +
-                            "JOIN DIRECTORS AS d ON d.director_id = fd.director_id WHERE fd.DIRECTOR_ID = %s) AS D ON f.ID = D.FILM_ID " +
-                            "GROUP BY id " +
-                            "ORDER BY RELEASE_DATE ASC;", directorId),
-                    this::mapRowToFilm);
-            if (year.isEmpty()) {
-                throw new NotFoundException("Режисер или его фильмы не найдены");
-            } else {
-                log.info("Получен список фильмов режиссера id = {} отсортированных по году", directorId);
-                return year;
-            }
-        } catch (DataAccessException e) {
-            log.error("Ошибка при получении списка фильмов режиссера id = {} отсортированных по году", directorId);
-        }
-        return null;
+        return jdbcTemplate.query(String.format("SELECT id, NAME, DESCRIPTION, DURATION, RELEASE_DATE, " +
+                        "array_agg(GENRE), MPA, MPA_ID, array_agg(GENRE_ID), array_agg(DIRECTOR_ID), array_agg(DIRECTOR_NAME) " +
+                        "FROM films AS f " +
+                        "LEFT JOIN (SELECT FILM_ID, GENRE, fg.GENRE_ID FROM film_genres as fg " +
+                        "JOIN genres AS g ON g.genre_id = fg.genre_id) AS G ON f.ID = G.film_id " +
+                        "LEFT JOIN (SELECT FILM_ID , MPA, fm.MPA_ID FROM FILM_MPA as fm " +
+                        "JOIN MPA AS m ON m.mpa_id = fm.mpa_id) AS M ON f.ID = M.film_id " +
+                        "LEFT JOIN (SELECT FILM_ID, COUNT(USER_ID) AS likes " +
+                        "FROM FILM_LIKES GROUP BY FILM_ID) AS fl ON f.ID = FL.FILM_ID " +
+                        "RIGHT JOIN (SELECT FILM_ID, DIRECTOR_NAME, fd.DIRECTOR_ID FROM FILM_DIRECTORS AS fd " +
+                        "JOIN DIRECTORS AS d ON d.director_id = fd.director_id WHERE fd.DIRECTOR_ID = %s) AS D ON f.ID = D.FILM_ID " +
+                        "GROUP BY id " +
+                        "ORDER BY RELEASE_DATE ASC;", directorId),
+                this::mapRowToFilm);
     }
 
     public Film add(Film film) {
-        try {
-            String sqlFilm = "insert into films (name, description, release_date, duration) " +
-                    "values (?, ?, ?, ?);";
-            KeyHolder keyHolder = new GeneratedKeyHolder();
-            jdbcTemplate.update(connection -> {
-                PreparedStatement stmt = connection.prepareStatement(sqlFilm, new String[]{"id"});
-                stmt.setString(1, film.getName());
-                stmt.setString(2, film.getDescription());
-                stmt.setDate(3, Date.valueOf(film.getReleaseDate()));
-                stmt.setInt(4, film.getDuration());
-                return stmt;
-            }, keyHolder);
+        String sqlFilm = "insert into films (name, description, release_date, duration) " +
+                "values (?, ?, ?, ?);";
+        KeyHolder keyHolder = new GeneratedKeyHolder();
+        if (jdbcTemplate.update(connection -> {
+            PreparedStatement stmt = connection.prepareStatement(sqlFilm, new String[]{"id"});
+            stmt.setString(1, film.getName());
+            stmt.setString(2, film.getDescription());
+            stmt.setDate(3, Date.valueOf(film.getReleaseDate()));
+            stmt.setInt(4, film.getDuration());
+            return stmt;
+        }, keyHolder) > 0) {
             Integer filmID = Objects.requireNonNull(keyHolder.getKey()).intValue();
             film.setId(filmID);
             updateFilmGenresLinks(film);
@@ -207,165 +158,89 @@ public class FilmDbStorage implements FilmStorage {
             updateFilmDirectorsLinks(film);
             log.info("Добавлен фильм по id = {}", filmID);
             return film;
-        } catch (DataAccessException e) {
-            log.error("Ошибка при добавлении фильма", e);
-            return null;
+        } else {
+            return ERROR_ENTITY_FILM;
         }
     }
 
     public Film update(Film film) {
-        try {
-            String sqlFilms = "UPDATE films SET name = ?, description = ?, release_Date = ?, " +
-                    "duration = ? WHERE id = ?;";
-            if (jdbcTemplate.update(sqlFilms, film.getName(), film.getDescription(), film.getReleaseDate(),
-                    film.getDuration(), film.getId()) > 0) {
-                Film sortedByGenre = updateFilmGenresLinks(film);
-                updateFilmMPALinks(sortedByGenre);
-                log.info("Обновлен фильм по id = {}", film.getId());
-                return updateFilmDirectorsLinks(sortedByGenre);
-            } else {
-                throw new NotFoundException("Фильм не найден!");
-            }
-        } catch (DataAccessException e) {
-            return null;
+        String sqlFilms = "UPDATE films SET name = ?, description = ?, release_Date = ?, " +
+                "duration = ? WHERE id = ?;";
+        if (jdbcTemplate.update(sqlFilms, film.getName(), film.getDescription(), film.getReleaseDate(),
+                film.getDuration(), film.getId()) > 0) {
+            Film sortedByGenre = updateFilmGenresLinks(film);
+            updateFilmMPALinks(sortedByGenre);
+            log.info("Обновлен фильм по id = {}", film.getId());
+            return updateFilmDirectorsLinks(sortedByGenre);
+        } else {
+            return ERROR_ENTITY_FILM;
         }
     }
 
     public List<Film> getMostPopularFilmsByGenreId(Integer count, Integer genreId) {
-        if (count > 0) {
-            try {
-                return jdbcTemplate.query(String.format("SELECT id, NAME, DESCRIPTION, DURATION, RELEASE_DATE," +
-                                " array_agg(GENRE), MPA, likes, MPA_ID, array_agg(GENRE_ID), array_agg(DIRECTOR_ID), array_agg(DIRECTOR_NAME)" +
-                                " FROM films AS f LEFT JOIN (SELECT FILM_ID," +
-                                " GENRE, fg.GENRE_ID FROM film_genres as fg JOIN genres AS g ON g.genre_id = fg.genre_id) AS" +
-                                " G ON f.ID = G.film_id LEFT JOIN (SELECT FILM_ID , MPA, fm.MPA_ID FROM FILM_MPA as fm JOIN MPA AS" +
-                                " m ON m.mpa_id = fm.mpa_id) AS M ON f.ID = M.film_id LEFT JOIN (SELECT FILM_ID, COUNT(USER_ID) AS" +
-                                " likes FROM FILM_LIKES GROUP BY FILM_ID) AS fl ON f.ID = FL.FILM_ID" +
-                                " LEFT JOIN (SELECT FILM_ID, DIRECTOR_NAME, fd.DIRECTOR_ID FROM FILM_DIRECTORS AS fd" +
-                                " JOIN DIRECTORS AS d ON d.director_id = fd.director_id) AS D ON f.ID = D.FILM_ID" +
-                                " RIGHT JOIN (SELECT FILM_ID FROM FILM_GENRES WHERE GENRE_ID = %s) AS fi ON f.ID = fi.FILM_ID" +
-                                " GROUP BY id ORDER BY LIKES DESC" +
-                                " LIMIT %s;", genreId, count),
-                        this::mapRowToFilm);
-            } catch (DataAccessException e) {
-                log.error("Ошибка при получении списка популярных фильмов", e);
-            }
-        } else {
-            throw new ValidationException("Передан параметр в count <= 0 ");
-        }
-        return null;
+        return jdbcTemplate.query(String.format("SELECT id, NAME, DESCRIPTION, DURATION, RELEASE_DATE," +
+                        " array_agg(GENRE), MPA, likes, MPA_ID, array_agg(GENRE_ID), array_agg(DIRECTOR_ID), array_agg(DIRECTOR_NAME)" +
+                        " FROM films AS f LEFT JOIN (SELECT FILM_ID," +
+                        " GENRE, fg.GENRE_ID FROM film_genres as fg JOIN genres AS g ON g.genre_id = fg.genre_id) AS" +
+                        " G ON f.ID = G.film_id LEFT JOIN (SELECT FILM_ID , MPA, fm.MPA_ID FROM FILM_MPA as fm JOIN MPA AS" +
+                        " m ON m.mpa_id = fm.mpa_id) AS M ON f.ID = M.film_id LEFT JOIN (SELECT FILM_ID, COUNT(USER_ID) AS" +
+                        " likes FROM FILM_LIKES GROUP BY FILM_ID) AS fl ON f.ID = FL.FILM_ID" +
+                        " LEFT JOIN (SELECT FILM_ID, DIRECTOR_NAME, fd.DIRECTOR_ID FROM FILM_DIRECTORS AS fd" +
+                        " JOIN DIRECTORS AS d ON d.director_id = fd.director_id) AS D ON f.ID = D.FILM_ID" +
+                        " RIGHT JOIN (SELECT FILM_ID FROM FILM_GENRES WHERE GENRE_ID = %s) AS fi ON f.ID = fi.FILM_ID" +
+                        " GROUP BY id ORDER BY LIKES DESC" +
+                        " LIMIT %s;", genreId, count),
+                this::mapRowToFilm);
     }
 
     public List<Film> getMostPopularFilmsByYear(Integer count, Integer year) {
-        if (count > 0) {
-            try {
-                return jdbcTemplate.query(String.format("SELECT id, NAME, DESCRIPTION, DURATION, RELEASE_DATE," +
-                                " array_agg(GENRE), MPA, likes, MPA_ID, array_agg(GENRE_ID), array_agg(DIRECTOR_ID), array_agg(DIRECTOR_NAME)" +
-                                " FROM films AS f LEFT JOIN (SELECT FILM_ID," +
-                                " GENRE, fg.GENRE_ID FROM film_genres as fg JOIN genres AS g ON g.genre_id = fg.genre_id) AS" +
-                                " G ON f.ID = G.film_id LEFT JOIN (SELECT FILM_ID , MPA, fm.MPA_ID FROM FILM_MPA as fm JOIN MPA AS" +
-                                " m ON m.mpa_id = fm.mpa_id) AS M ON f.ID = M.film_id LEFT JOIN (SELECT FILM_ID, COUNT(USER_ID) AS" +
-                                " likes FROM FILM_LIKES GROUP BY FILM_ID) AS fl ON f.ID = FL.FILM_ID" +
-                                " LEFT JOIN (SELECT FILM_ID, DIRECTOR_NAME, fd.DIRECTOR_ID FROM FILM_DIRECTORS AS fd" +
-                                " JOIN DIRECTORS AS d ON d.director_id = fd.director_id) AS D ON f.ID = D.FILM_ID" +
-                                " WHERE FORMATDATETIME(RELEASE_DATE ,'yyyy') = %s" +
-                                " GROUP BY id" +
-                                " ORDER BY LIKES DESC" +
-                                " LIMIT %s;", year, count),
-                        this::mapRowToFilm);
-            } catch (DataAccessException e) {
-                log.error("Ошибка при получении списка популярных фильмов", e);
-            }
-        } else {
-            throw new ValidationException("Передан параметр в count <= 0 ");
-        }
-        return null;
+        return jdbcTemplate.query(String.format("SELECT id, NAME, DESCRIPTION, DURATION, RELEASE_DATE," +
+                        " array_agg(GENRE), MPA, likes, MPA_ID, array_agg(GENRE_ID), array_agg(DIRECTOR_ID), array_agg(DIRECTOR_NAME)" +
+                        " FROM films AS f LEFT JOIN (SELECT FILM_ID," +
+                        " GENRE, fg.GENRE_ID FROM film_genres as fg JOIN genres AS g ON g.genre_id = fg.genre_id) AS" +
+                        " G ON f.ID = G.film_id LEFT JOIN (SELECT FILM_ID , MPA, fm.MPA_ID FROM FILM_MPA as fm JOIN MPA AS" +
+                        " m ON m.mpa_id = fm.mpa_id) AS M ON f.ID = M.film_id LEFT JOIN (SELECT FILM_ID, COUNT(USER_ID) AS" +
+                        " likes FROM FILM_LIKES GROUP BY FILM_ID) AS fl ON f.ID = FL.FILM_ID" +
+                        " LEFT JOIN (SELECT FILM_ID, DIRECTOR_NAME, fd.DIRECTOR_ID FROM FILM_DIRECTORS AS fd" +
+                        " JOIN DIRECTORS AS d ON d.director_id = fd.director_id) AS D ON f.ID = D.FILM_ID" +
+                        " WHERE FORMATDATETIME(RELEASE_DATE ,'yyyy') = %s" +
+                        " GROUP BY id" +
+                        " ORDER BY LIKES DESC" +
+                        " LIMIT %s;", year, count),
+                this::mapRowToFilm);
     }
 
     public List<Film> getMostPopularFilmsByGenreIdAndYear(Integer count, Integer year, Integer genreId) {
-        if (count > 0) {
-            try {
-                return jdbcTemplate.query(String.format("SELECT id, NAME, DESCRIPTION, DURATION, RELEASE_DATE," +
-                                " array_agg(GENRE), MPA, likes, MPA_ID, array_agg(GENRE_ID), array_agg(DIRECTOR_ID), array_agg(DIRECTOR_NAME)" +
-                                " FROM films AS f LEFT JOIN (SELECT FILM_ID," +
-                                " GENRE, fg.GENRE_ID FROM film_genres as fg JOIN genres AS g ON g.genre_id = fg.genre_id) AS" +
-                                " G ON f.ID = G.film_id LEFT JOIN (SELECT FILM_ID , MPA, fm.MPA_ID FROM FILM_MPA as fm JOIN MPA AS" +
-                                " m ON m.mpa_id = fm.mpa_id) AS M ON f.ID = M.film_id LEFT JOIN (SELECT FILM_ID, COUNT(USER_ID) AS" +
-                                " likes FROM FILM_LIKES GROUP BY FILM_ID) AS fl ON f.ID = FL.FILM_ID" +
-                                " RIGHT JOIN (SELECT FILM_ID FROM FILM_GENRES WHERE GENRE_ID = %s) AS fi ON f.ID = fi.FILM_ID" +
-                                " LEFT JOIN (SELECT FILM_ID, DIRECTOR_NAME, fd.DIRECTOR_ID FROM FILM_DIRECTORS AS fd" +
-                                " JOIN DIRECTORS AS d ON d.director_id = fd.director_id) AS D ON f.ID = D.FILM_ID" +
-                                " WHERE FORMATDATETIME(RELEASE_DATE ,'yyyy') = %s" +
-                                " GROUP BY id" +
-                                " ORDER BY LIKES DESC" +
-                                " LIMIT %s;", genreId, year, count),
-                        this::mapRowToFilm);
-            } catch (DataAccessException e) {
-                log.error("Ошибка при получении списка популярных фильмов", e);
-                return new ArrayList<>();
-            }
-        } else {
-            throw new ValidationException("Передан параметр в count <= 0 ");
-        }
+        return jdbcTemplate.query(String.format("SELECT id, NAME, DESCRIPTION, DURATION, RELEASE_DATE," +
+                        " array_agg(GENRE), MPA, likes, MPA_ID, array_agg(GENRE_ID), array_agg(DIRECTOR_ID), array_agg(DIRECTOR_NAME)" +
+                        " FROM films AS f LEFT JOIN (SELECT FILM_ID," +
+                        " GENRE, fg.GENRE_ID FROM film_genres as fg JOIN genres AS g ON g.genre_id = fg.genre_id) AS" +
+                        " G ON f.ID = G.film_id LEFT JOIN (SELECT FILM_ID , MPA, fm.MPA_ID FROM FILM_MPA as fm JOIN MPA AS" +
+                        " m ON m.mpa_id = fm.mpa_id) AS M ON f.ID = M.film_id LEFT JOIN (SELECT FILM_ID, COUNT(USER_ID) AS" +
+                        " likes FROM FILM_LIKES GROUP BY FILM_ID) AS fl ON f.ID = FL.FILM_ID" +
+                        " RIGHT JOIN (SELECT FILM_ID FROM FILM_GENRES WHERE GENRE_ID = %s) AS fi ON f.ID = fi.FILM_ID" +
+                        " LEFT JOIN (SELECT FILM_ID, DIRECTOR_NAME, fd.DIRECTOR_ID FROM FILM_DIRECTORS AS fd" +
+                        " JOIN DIRECTORS AS d ON d.director_id = fd.director_id) AS D ON f.ID = D.FILM_ID" +
+                        " WHERE FORMATDATETIME(RELEASE_DATE ,'yyyy') = %s" +
+                        " GROUP BY id" +
+                        " ORDER BY LIKES DESC" +
+                        " LIMIT %s;", genreId, year, count),
+                this::mapRowToFilm);
     }
 
-    public Film addLike(Integer filmID, Integer userID) {
-        try {
-            String sqlLike = "MERGE INTO film_likes KEY(user_id, film_id) VALUES (?,?)";
-            if (jdbcTemplate.update(sqlLike, userID, filmID) > 0) {
-                Optional<Film> check = getById(filmID);
-                if (check.isPresent()) {
-                    log.info("Добавлен лайк фильму id = {}, пользователем id = {}", filmID, userID);
-                    jdbcTemplate.update("INSERT INTO USER_EVENT_FEED (user_id, event_type, operation, entity_id, time_stamp) VALUES (?, ?, ?, ?, ?)",
-                            userID, "LIKE", "ADD", filmID, Instant.now().toEpochMilli());
-                    log.info("Добавлено в историю добавление лайка пользователем id = {} фильму id = {}", userID, filmID);
-                    return check.get();
-                }
-            } else {
-                throw new NotFoundException(String.format("Фильм по id = %s не найден!", filmID));
-            }
-        } catch (DataAccessException e) {
-            log.error("Ошибка при добавления лайка", e);
-        }
-        return null;
+    public boolean addLike(Integer filmID, Integer userID) {
+        String sqlLike = "MERGE INTO film_likes KEY(user_id, film_id) VALUES (?,?)";
+        return jdbcTemplate.update(sqlLike, userID, filmID) > 0;
     }
 
-    public Integer deleteLike(Integer filmID, Integer userID) {
-        try {
-            String sqlFL = String.format("delete from film_likes where film_id = %s and user_id = %s", filmID, userID);
-            if (jdbcTemplate.update(sqlFL) > 0) {
-                log.info("Удален лайк пользователя id = {} для фильма id = {}", userID, filmID);
-                jdbcTemplate.update("INSERT INTO USER_EVENT_FEED (user_id, event_type, operation, entity_id, time_stamp) VALUES (?, ?, ?, ?, ?)",
-                        userID, "LIKE", "REMOVE", filmID, Instant.now().toEpochMilli());
-                log.info("Добавлено в историю удаление лайка пользователя id = {} у фильма id = {}", userID, filmID);
-                return filmID;
-            } else {
-                throw new NotFoundException(String.format("Фильм по id = %s не найден!", filmID));
-            }
-        } catch (DataAccessException e) {
-            log.error("Ошибка при удалени лайка", e);
-            return null;
-        }
+    public boolean deleteLike(Integer filmID, Integer userID) {
+        String sqlFL = "delete from film_likes where film_id = ? and user_id = ?";
+        return jdbcTemplate.update(sqlFL, filmID, userID) > 0;
     }
 
     public boolean delete(Integer id) {
-        log.info("Удаление фильма по id = {}", id);
         String sqlQuery = "DELETE FROM films WHERE ID= ?";
-        deleteFilmGenresLinks(id);
-        deleteFilmMPALinks(id);
-        deleteFilmLikesLinks(id);
         return jdbcTemplate.update(sqlQuery, id) > 0;
-    }
-
-    public List<Integer> getLikes(Integer filmID) {
-        try {
-            List<Integer> likes = jdbcTemplate.query(String.format("select user_id from film_likes where film_id = %s", filmID),
-                    new SingleColumnRowMapper<>(Integer.class));
-            log.info("Получены лайки фильма id = {}", filmID);
-            return likes;
-        } catch (DataAccessException e) {
-            throw new NotFoundException(String.format("Фильм по id = %s не найден!", filmID));
-        }
     }
 
     private Film updateFilmGenresLinks(Film film) {
@@ -439,18 +314,11 @@ public class FilmDbStorage implements FilmStorage {
         log.info("Удалены жанры у фильма id = {}", filmId);
     }
 
-    private void deleteFilmLikesLinks(Integer filmId) {
-        String sqlQuery = "DELETE FROM FILM_LIKES " +
-                "WHERE FILM_ID = ?";
-        jdbcTemplate.update(sqlQuery, filmId);
-        log.info("Удалены лайки у фильма id = {}", filmId);
-    }
-
     private void deleteFilmDirectorsLinks(Integer filmId) {
         String sqlQuery = "DELETE FROM FILM_DIRECTORS " +
                 "WHERE FILM_ID = ?";
         jdbcTemplate.update(sqlQuery, filmId);
-        log.info("Удалены жанры у фильма id = {}", filmId);
+        log.info("Удалены режисеры у фильма id = {}", filmId);
     }
 
     private Film mapRowToFilm(ResultSet resultSet, int rowNum) throws SQLException {
@@ -468,18 +336,16 @@ public class FilmDbStorage implements FilmStorage {
 
     private Set<Genre> mapRowToSetGenres(ResultSet resultSet) throws SQLException {
         Set<Genre> newGenres = new TreeSet<>(Comparator.comparing(Genre::getId));
-        List<Integer> idGen = Arrays.stream(
-                        resultSet.getString("ARRAY_AGG(GENRE_ID)")
-                                .replaceAll("[\\[\\]\\\\ ]", "")
-                                .split(","))
+        List<Integer> idGen = Arrays.stream(resultSet.getString("ARRAY_AGG(GENRE_ID)")
+                .replaceAll("[\\[\\]\\\\ ]", "")
+                .split(","))
                 .filter(elem -> !elem.equals("null"))
                 .map(Integer::parseInt)
                 .collect(Collectors.toList()
                 );
-        List<String> nameGen = Arrays.stream(
-                        resultSet.getString("ARRAY_AGG(GENRE)")
-                                .replaceAll("[\\[\\]\\\\ ]", "")
-                                .split(","))
+        List<String> nameGen = Arrays.stream(resultSet.getString("ARRAY_AGG(GENRE)")
+                .replaceAll("[\\[\\]\\\\ ]", "")
+                .split(","))
                 .filter(elem -> !elem.equals("null"))
                 .collect(Collectors.toList()
                 );
@@ -491,18 +357,16 @@ public class FilmDbStorage implements FilmStorage {
 
     private Set<Director> mapRowToSetDirectors(ResultSet resultSet) throws SQLException {
         Set<Director> newDirectors = new TreeSet<>(Comparator.comparing(Director::getId));
-        List<Integer> idDir = Arrays.stream(
-                        resultSet.getString("ARRAY_AGG(DIRECTOR_ID)")
-                                .replaceAll("[\\[\\] ]", "")
-                                .split(","))
+        List<Integer> idDir = Arrays.stream(resultSet.getString("ARRAY_AGG(DIRECTOR_ID)")
+                .replaceAll("[\\[\\] ]", "")
+                .split(","))
                 .filter(elem -> !elem.equals("null"))
                 .map(Integer::parseInt)
                 .collect(Collectors.toList()
                 );
-        List<String> nameDir = Arrays.stream(
-                        resultSet.getString("ARRAY_AGG(DIRECTOR_NAME)")
-                                .replaceAll("[\\[\\]]", "")
-                                .split(","))
+        List<String> nameDir = Arrays.stream(resultSet.getString("ARRAY_AGG(DIRECTOR_NAME)")
+                .replaceAll("[\\[\\]]", "")
+                .split(","))
                 .filter(elem -> !elem.equals("null"))
                 .collect(Collectors.toList()
                 );
@@ -515,17 +379,16 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public List<Optional<Film>> getCommonFilms(Integer userId, Integer friendId) {
-        SqlRowSet userFilms = jdbcTemplate.queryForRowSet("SELECT FILM_ID FROM FilM_LIKES WHERE USER_ID=?", userId);
+        SqlRowSet userFilms = jdbcTemplate.queryForRowSet("SELECT FILM_ID FROM FILM_LIKES WHERE USER_ID=?", userId);
         List<Integer> userFilmIds = new ArrayList<>();
         while (userFilms.next()) {
             userFilmIds.add(userFilms.getInt("FILM_ID"));
         }
-        SqlRowSet friendsFilms = jdbcTemplate.queryForRowSet("SELECT FILM_ID FROM FilM_LIKES WHERE USER_ID=?", friendId);
+        SqlRowSet friendsFilms = jdbcTemplate.queryForRowSet("SELECT FILM_ID FROM FILM_LIKES WHERE USER_ID=?", friendId);
         List<Integer> friendsFilmIds = new ArrayList<>();
         while (friendsFilms.next()) {
             friendsFilmIds.add(friendsFilms.getInt("FILM_ID"));
         }
-
 
         List<Integer> commonFilmsIds = new ArrayList<>();
         for (Integer userFilmId : userFilmIds) {
