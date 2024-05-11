@@ -43,7 +43,7 @@ public class ReviewDbStorageImpl implements ReviewStorage {
                 " where ID = ?";
         if (jdbcTemplate.update(sqlQuery, review.getContent(), review.getIsPositive(), review.getId()) > 0) {
             log.info("Отзыв по id = {} успешно обновлен", review.getId());
-            Optional<Review> updated =getById(review.getId());
+            Optional<Review> updated = getById(review.getId());
             if (updated.isPresent()) {
                 return updated.get();
             }
