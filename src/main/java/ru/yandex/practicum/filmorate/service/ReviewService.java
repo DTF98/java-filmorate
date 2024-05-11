@@ -6,7 +6,6 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.dao.ReviewLikeStorage;
 import ru.yandex.practicum.filmorate.dao.ReviewStorage;
-import ru.yandex.practicum.filmorate.dao.UserFeedStorage;
 import ru.yandex.practicum.filmorate.exception.ApplicationException;
 import ru.yandex.practicum.filmorate.exception.CreateEntityException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
@@ -28,7 +27,7 @@ public class ReviewService {
     private final FilmService filmService;
     private final UserService userService;
     private final ReviewLikeStorage reviewLikeStorage;
-    private final UserFeedStorage userFeedStorage;
+    private final UserFeedService userFeedService;
 
     public Review add(Review review) {
         filmService.getById(review.getFilmId());
@@ -39,7 +38,7 @@ public class ReviewService {
                 throw new CreateEntityException(String.format("Отзыв не добавлен! %s", review));
             }
             log.info("Отзыв по id = {} успешно добавлен", review.getId());
-            if (userFeedStorage.addInHistory(review.getUserId(), "REVIEW", "ADD", review.getId())) {
+            if (userFeedService.addInHistoryFeed(review.getUserId(), "REVIEW", "ADD", review.getId())) {
                 log.info("Добавлено в историю создание отзыва пользователем id = {} фильму id = {}", review.getId(), review.getFilmId());
             }
             return added;
@@ -55,7 +54,7 @@ public class ReviewService {
             if (updatedReview.getId() == 0) {
                 throw new NotFoundException("Не найден отзыв!");
             }
-            if (userFeedStorage.addInHistory(updatedReview.getUserId(), "REVIEW", "UPDATE", updatedReview.getId())) {
+            if (userFeedService.addInHistoryFeed(updatedReview.getUserId(), "REVIEW", "UPDATE", updatedReview.getId())) {
                 log.info("Добавлено в историю обновление отзыва пользователем id = {} фильму id = {}", updatedReview.getId(), updatedReview.getFilmId());
             }
             return updatedReview;
@@ -72,7 +71,7 @@ public class ReviewService {
                 deleteReviewLikes(id);
                 reviewStorage.delete(id);
                 if (delete.isPresent()) {
-                    if (userFeedStorage.addInHistory(delete.get().getUserId(), "REVIEW", "REMOVE", delete.get().getId()))
+                    if (userFeedService.addInHistoryFeed(delete.get().getUserId(), "REVIEW", "REMOVE", delete.get().getId()))
                         log.info("Добавлено в историю удаление отзыва пользователем id = {} фильму id = {}", delete.get().getId(), delete.get().getFilmId());
                 }
                 return id;

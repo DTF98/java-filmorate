@@ -1,7 +1,6 @@
 package ru.yandex.practicum.filmorate.dao;
 
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.model.UserFeed;
 
 import java.util.List;
 
@@ -11,8 +10,6 @@ public interface UserStorage extends Storage<User> {
     boolean deleteFriend(Integer user, Integer friend);
 
     List<User> getFriends(Integer userId);
-
-    List<UserFeed> getFeedByUserId(Integer userId);
 
     boolean isExistById(Integer id);
 

@@ -9,7 +9,6 @@ import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.dao.UserStorage;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.model.UserFeed;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -116,11 +115,6 @@ public class UserDbStorage implements UserStorage {
                 "LEFT JOIN users AS u ON ur.friend_id = u.id WHERE ur.user_id = %s", userId), this::mapRowToUser);
     }
 
-    public List<UserFeed> getFeedByUserId(Integer userId) {
-        return jdbcTemplate.query(String.format("SELECT * FROM USER_EVENT_FEED WHERE USER_ID = %s", userId),
-                this::mapRowToUserFeed);
-    }
-
     public List<Integer> getUserLikes(Integer id) {
         SqlRowSet userLike = jdbcTemplate.queryForRowSet("select film_id from film_likes where user_id=?", id);
         List<Integer> currentFilmIdsUser = new ArrayList<>();
@@ -141,17 +135,6 @@ public class UserDbStorage implements UserStorage {
             }
         }
         return userIds;
-    }
-
-    private UserFeed mapRowToUserFeed(ResultSet resultSet, int rowNum) throws SQLException {
-        return UserFeed.builder()
-                .userId(resultSet.getInt("user_id"))
-                .eventId(resultSet.getInt("event_id"))
-                .entityId(resultSet.getInt("entity_id"))
-                .operation(resultSet.getString("operation"))
-                .eventType(resultSet.getString("event_type"))
-                .timestamp(resultSet.getLong("time_stamp"))
-                .build();
     }
 
     private User mapRowToUser(ResultSet resultSet, int rowNum) throws SQLException {
