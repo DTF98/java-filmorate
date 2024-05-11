@@ -3,7 +3,7 @@ package ru.yandex.practicum.filmorate.dao;
 import ru.yandex.practicum.filmorate.model.Film;
 
 import java.util.List;
-import java.util.Optional;
+import java.util.Map;
 
 public interface FilmStorage extends Storage<Film> {
     boolean addLike(Integer filmID, Integer userID);
@@ -24,5 +24,7 @@ public interface FilmStorage extends Storage<Film> {
 
     List<Film> getSortedYearListOfDirectorsFilms(Integer directorId);
 
-    List<Optional<Film>> getCommonFilms(Integer userId, Integer friendId);
+    List<Integer> getListOfUsersFilms(Integer id);
+
+    Map<Integer, Integer> getFilmIdByPopularity(List<Integer> filmIds);
 }

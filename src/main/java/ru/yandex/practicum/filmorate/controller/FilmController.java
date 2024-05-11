@@ -10,7 +10,6 @@ import ru.yandex.practicum.filmorate.service.FilmService;
 import javax.validation.Valid;
 import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping(path = "films")
@@ -79,9 +78,8 @@ public class FilmController {
         return ResponseEntity.ok(service.getSortedListOfDirectorsFilms(directorId, sortBy));
     }
 
-
     @GetMapping("/common")
-    public ResponseEntity<Collection<Optional<Film>>> getCommonFilms(@RequestParam("userId") Integer userId,
+    public ResponseEntity<Collection<Film>> getCommonFilms(@RequestParam("userId") Integer userId,
                                                                @RequestParam("friendId") Integer friendId) {
         log.info("Получить список общих фильмов пользователей по id = {} и id = {}", userId, friendId);
         return ResponseEntity.ok(service.getCommonFilms(userId, friendId));

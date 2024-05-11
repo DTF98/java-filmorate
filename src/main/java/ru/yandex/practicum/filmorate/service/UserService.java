@@ -4,7 +4,6 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.filmorate.dao.UserFeedStorage;
 import ru.yandex.practicum.filmorate.dao.UserStorage;
 import ru.yandex.practicum.filmorate.exception.AddFeedException;
 import ru.yandex.practicum.filmorate.exception.ApplicationException;
@@ -21,7 +20,7 @@ import java.util.*;
 @AllArgsConstructor
 public class UserService {
     private final UserStorage userStorage;
-    private final UserFeedStorage userFeedStorage;
+    private final UserFeedService userFeedService;
     private FilmService filmService;
 
     public User addToFriends(Integer userId, Integer friendId) {
@@ -29,7 +28,7 @@ public class UserService {
             log.info("Добавление в друзья пользователей {} и {}", userId, friendId);
             Optional<User> user = userStorage.getById(userId);
             if (user.isPresent() && userStorage.addFriend(userId, friendId)) {
-                if (userFeedStorage.addInHistory(userId, "FRIEND", "ADD", friendId)) {
+                if (userFeedService.addInHistoryFeed(userId, "FRIEND", "ADD", friendId)) {
                     log.info("Добавлено в историю добавление друга у пользователя id = {}", userId);
                     return user.get();
                 } else {
@@ -50,7 +49,7 @@ public class UserService {
             log.info("Удаление из друзей userId={}, friendId={}", userId, friendId);
             if (userStorage.deleteFriend(userId, friendId)) {
                 log.info("Пользователь id = {} удалил из друзей пользователя id = {}", userId, friendId);
-                if (userFeedStorage.addInHistory(userId, "FRIEND", "REMOVE", friendId)) {
+                if (userFeedService.addInHistoryFeed(userId, "FRIEND", "REMOVE", friendId)) {
                     log.info("Добавлено в историю удаление друга у пользователя id = {}", userId);
                     return friendId;
                 } else {
@@ -178,7 +177,7 @@ public class UserService {
             if (!userStorage.isExistById(userId)) {
                 throw new NotFoundException(String.format("Отзывов по id = %s не найдено!", userId));
             }
-            return userStorage.getFeedByUserId(userId);
+            return userFeedService.getFeedByUserId(userId);
         } catch (DataAccessException e) {
             log.error("Ошибка при получении ленты событий для пользователя по id = {}", userId);
         }
@@ -283,6 +282,6 @@ public class UserService {
                 max = e;
         }
 
-        return max.getKey();
+        return Objects.requireNonNull(max).getKey();
     }
 }

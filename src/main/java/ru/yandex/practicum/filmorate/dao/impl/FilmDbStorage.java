@@ -321,6 +321,27 @@ public class FilmDbStorage implements FilmStorage {
         log.info("Удалены режисеры у фильма id = {}", filmId);
     }
 
+    public List<Integer> getListOfUsersFilms(Integer id) {
+        SqlRowSet userFilms = jdbcTemplate.queryForRowSet("SELECT FILM_ID FROM FILM_LIKES WHERE USER_ID=?", id);
+        List<Integer> userFilmIds = new ArrayList<>();
+        while (userFilms.next()) {
+            userFilmIds.add(userFilms.getInt("FILM_ID"));
+        }
+        return userFilmIds;
+    }
+
+    public Map<Integer, Integer> getFilmIdByPopularity(List<Integer> filmIds) {
+        Map<Integer, Integer> filmPopularityMap = new HashMap<>();
+        for (Integer id : filmIds) {
+            SqlRowSet sqlRowSet = jdbcTemplate.queryForRowSet("SELECT COUNT(FILM_ID) FROM FILM_LIKES WHERE FILM_ID=?", id);
+            while (sqlRowSet.next()) {
+                int count = sqlRowSet.getInt("COUNT(FILM_ID)");
+                filmPopularityMap.put(id, count);
+            }
+        }
+        return filmPopularityMap;
+    }
+
     private Film mapRowToFilm(ResultSet resultSet, int rowNum) throws SQLException {
         return Film.builder()
                 .id(resultSet.getInt("id"))
@@ -374,56 +395,5 @@ public class FilmDbStorage implements FilmStorage {
             newDirectors.add(new Director(idDir.get(i), nameDir.get(i)));
         }
         return newDirectors;
-    }
-
-
-    @Override
-    public List<Optional<Film>> getCommonFilms(Integer userId, Integer friendId) {
-        SqlRowSet userFilms = jdbcTemplate.queryForRowSet("SELECT FILM_ID FROM FILM_LIKES WHERE USER_ID=?", userId);
-        List<Integer> userFilmIds = new ArrayList<>();
-        while (userFilms.next()) {
-            userFilmIds.add(userFilms.getInt("FILM_ID"));
-        }
-        SqlRowSet friendsFilms = jdbcTemplate.queryForRowSet("SELECT FILM_ID FROM FILM_LIKES WHERE USER_ID=?", friendId);
-        List<Integer> friendsFilmIds = new ArrayList<>();
-        while (friendsFilms.next()) {
-            friendsFilmIds.add(friendsFilms.getInt("FILM_ID"));
-        }
-
-        List<Integer> commonFilmsIds = new ArrayList<>();
-        for (Integer userFilmId : userFilmIds) {
-            if (friendsFilmIds.contains(userFilmId)) {
-                commonFilmsIds.add(userFilmId);
-            }
-        }
-        List<Optional<Film>> commonFilms = new ArrayList<>();
-
-        List<Integer> sortedFilmsIds = getSortedFilmByPopularity(commonFilmsIds);
-        for (Integer sortedFilmsId : sortedFilmsIds) {
-            commonFilms.add(getById(sortedFilmsId));
-        }
-
-        if (commonFilms.isEmpty()) {
-            return new ArrayList<>();
-        } else {
-            return commonFilms;
-        }
-    }
-
-    public List<Integer> getSortedFilmByPopularity(List<Integer> filmIds) {
-        Map<Integer, Integer> filmPopularityMap = new HashMap<>();
-        for (Integer id : filmIds) {
-            SqlRowSet sqlRowSet = jdbcTemplate.queryForRowSet("SELECT COUNT(FILM_ID) FROM FILM_LIKES WHERE FILM_ID=?", id);
-            while (sqlRowSet.next()) {
-                int count = sqlRowSet.getInt("COUNT(FILM_ID)");
-                filmPopularityMap.put(id, count);
-            }
-        }
-        List<Integer> sortedFilmIds = new ArrayList<>();
-        filmPopularityMap.entrySet().stream()
-                .sorted(Map.Entry.<Integer, Integer>comparingByValue().reversed());
-        sortedFilmIds.addAll(filmPopularityMap.keySet());
-
-        return sortedFilmIds;
     }
 }

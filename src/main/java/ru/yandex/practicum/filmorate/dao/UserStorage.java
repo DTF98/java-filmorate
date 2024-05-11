@@ -12,8 +12,6 @@ public interface UserStorage extends Storage<User> {
 
     List<User> getFriends(Integer userId);
 
-    List<UserFeed> getFeedByUserId(Integer userId);
-
     boolean isExistById(Integer id);
 
     List<Integer> getUserLikes(Integer id);

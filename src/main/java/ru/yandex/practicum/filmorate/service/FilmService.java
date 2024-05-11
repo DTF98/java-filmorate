@@ -7,13 +7,13 @@ import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.dao.FilmStorage;
 import ru.yandex.practicum.filmorate.dao.GenreStorage;
 import ru.yandex.practicum.filmorate.dao.MPAStorage;
-import ru.yandex.practicum.filmorate.dao.UserFeedStorage;
 import ru.yandex.practicum.filmorate.exception.*;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -21,9 +21,9 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class FilmService {
     private final FilmStorage filmStorage;
-    private final UserFeedStorage userFeedStorage;
     private final GenreStorage genreStorage;
     private final MPAStorage mpaStorage;
+    private final UserFeedService userFeedService;
 
     public Film addLike(Integer userID, Integer filmID) {
         try {
@@ -31,7 +31,7 @@ public class FilmService {
             if (film.isPresent() && filmStorage.addLike(filmID, userID)) {
                 log.info(String.format("Добавлен лайк фильму: id = %s пользователем id = %s",
                         filmID, userID));
-                if (userFeedStorage.addInHistory(userID, "LIKE", "ADD", filmID)) {
+                if (userFeedService.addInHistoryFeed(userID, "LIKE", "ADD", filmID)) {
                     log.info("Добавлено в историю добавление лайка пользователем id = {} фильму id = {}", userID, filmID);
                     return film.get();
                 } else {
@@ -53,7 +53,7 @@ public class FilmService {
         try {
             if (filmStorage.deleteLike(filmID, userID)) {
                 log.info("Удален лайк пользователя id = {} для фильма id = {}", userID, filmID);
-                if (userFeedStorage.addInHistory(userID,"LIKE", "REMOVE", filmID)) {
+                if (userFeedService.addInHistoryFeed(userID,"LIKE", "REMOVE", filmID)) {
                     log.info("Добавлено в историю удаление лайка пользователя id = {} у фильма id = {}", userID, filmID);
                     return filmID;
                 } else {
@@ -220,13 +220,41 @@ public class FilmService {
         throw new ApplicationException("Ошибка при получении списка фильмов режисера");
     }
 
-    public List<Optional<Film>> getCommonFilms(Integer userId, Integer friendId) {
+    public List<Film> getCommonFilms(Integer userId, Integer friendId) {
         try {
-            return filmStorage.getCommonFilms(userId, friendId);
+            List<Integer> userFilmIds = filmStorage.getListOfUsersFilms(userId);
+            List<Integer> friendsFilmIds = filmStorage.getListOfUsersFilms(friendId);
+
+            List<Integer> commonFilmsIds = new ArrayList<>();
+            for (Integer userFilmId : userFilmIds) {
+                if (friendsFilmIds.contains(userFilmId)) {
+                    commonFilmsIds.add(userFilmId);
+                }
+            }
+            List<Integer> sortedFilmsIds = getSortedFilmByPopularity(commonFilmsIds);
+
+            List<Film> commonFilms = new ArrayList<>();
+            for (Integer sortedFilmsId : sortedFilmsIds) {
+                commonFilms.add(getById(sortedFilmsId));
+            }
+            if (commonFilms.isEmpty()) {
+                return new ArrayList<>();
+            } else {
+                return commonFilms;
+            }
         } catch (DataAccessException e) {
             log.error("Ошибка при получении списка общих фильмов");
         }
         throw new ApplicationException("Ошибка при получении списка общих фильмов");
+    }
+
+    private List<Integer> getSortedFilmByPopularity(List<Integer> filmIds) {
+        Map<Integer, Integer> filmPopularityMap = filmStorage.getFilmIdByPopularity(filmIds);
+        List<Integer> sortedFilmIds = new ArrayList<>();
+        filmPopularityMap.entrySet().stream()
+                .sorted(Map.Entry.<Integer, Integer>comparingByValue().reversed());
+        sortedFilmIds.addAll(filmPopularityMap.keySet());
+        return sortedFilmIds;
     }
 }
 
