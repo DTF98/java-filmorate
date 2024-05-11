@@ -1,129 +1,99 @@
 package ru.yandex.practicum.filmorate.dao.impl;
 
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Component;
-import ru.yandex.practicum.filmorate.dao.FilmStorage;
 import ru.yandex.practicum.filmorate.dao.UserStorage;
-import ru.yandex.practicum.filmorate.exception.NotFoundException;
-import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.model.UserFeed;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.time.Instant;
 import java.time.LocalDate;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+
+import static ru.yandex.practicum.filmorate.constant.ConstantError.ERROR_ENTITY_USER;
 
 @Slf4j
 @Component
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class UserDbStorage implements UserStorage {
     private final JdbcTemplate jdbcTemplate;
-    private final FilmStorage filmStorage;
 
     public List<User> get() {
         return jdbcTemplate.query("select * from users order by id", this::mapRowToUser);
     }
 
     public User update(User item) {
-        try {
-            String sqlFilms = "UPDATE users SET email = ?, login = ?, name = ?, " +
-                    "birthday = ? WHERE id = ?;";
-            if (jdbcTemplate.update(sqlFilms, item.getEmail(), item.getLogin(), item.getName(),
-                    item.getBirthday(), item.getId()) > 0) {
-                return item;
-            } else {
-                throw new NotFoundException("Пользователь не найден!");
-            }
-        } catch (DataAccessException e) {
-            log.error("Ошибка при обновлении пользователя по id = {}", item.getId());
-            return null;
+        String sqlFilms = "UPDATE users SET email = ?, login = ?, name = ?, " +
+                "birthday = ? WHERE id = ?;";
+        if (jdbcTemplate.update(sqlFilms, item.getEmail(), item.getLogin(), item.getName(),
+                item.getBirthday(), item.getId()) > 0) {
+            return item;
+        } else {
+            return ERROR_ENTITY_USER;
         }
     }
 
     public User add(User user) {
         String sql = "insert into users (email, login, name, birthday) values (?, ?, ?, ?)";
         KeyHolder keyHolder = new GeneratedKeyHolder();
-        jdbcTemplate.update(connection -> {
+        if (jdbcTemplate.update(connection -> {
             PreparedStatement stmt = connection.prepareStatement(sql, new String[]{"id"});
             stmt.setString(1, user.getEmail());
             stmt.setString(2, user.getLogin());
             stmt.setString(3, user.getName());
             stmt.setString(4, String.valueOf(user.getBirthday()));
             return stmt;
-        }, keyHolder);
-        Integer userId = Objects.requireNonNull(keyHolder.getKey()).intValue();
-        user.setId(userId);
-        return user;
+        }, keyHolder) > 0) {
+            Integer userId = Objects.requireNonNull(keyHolder.getKey()).intValue();
+            user.setId(userId);
+            return user;
+        } else {
+            return ERROR_ENTITY_USER;
+        }
     }
 
     public Optional<User> getById(Integer id) {
-        try {
-            return Optional.ofNullable(jdbcTemplate.queryForObject("select * from users where id = ?",
-                    this::mapRowToUser, id));
-        } catch (DataAccessException e) {
-            throw new NotFoundException(String.format("Пользователь по id = %s не найден!", id));
-        }
+        return Optional.ofNullable(jdbcTemplate.queryForObject("select * from users where id = ?",
+                this::mapRowToUser, id));
     }
 
-    public User addFriend(Integer user, Integer friend) {
-        try {
-            String sqlGetFriends = "SELECT * FROM USER_FRIENDS WHERE user_id = ? AND friend_id = ?";
-            SqlRowSet user1Friends = jdbcTemplate.queryForRowSet(sqlGetFriends, user, friend);
-            SqlRowSet user2Friends = jdbcTemplate.queryForRowSet(sqlGetFriends, friend, user);
-            if (!user1Friends.next()) {
-                jdbcTemplate.update("INSERT INTO USER_FRIENDS (user_id, friend_id) VALUES (?, ?)",
-                        user, friend);
-                log.info("Пользователь id = {} добавил в друзья пользователя id = {}", user, friend);
-                jdbcTemplate.update("INSERT INTO USER_EVENT_FEED (user_id, event_type, operation, entity_id, time_stamp) VALUES (?, ?, ?, ?, ?)",
-                        user, "FRIEND", "ADD", friend, Instant.now().toEpochMilli());
-                log.info("Добавлено в историю добавление друга у пользователя id = {}", user);
-            }
-            if (user2Friends.next()) {
-                jdbcTemplate.update("UPDATE USER_FRIENDS SET status = ? WHERE user_id IN (?, ?) AND friend_id IN (?, ?)",
-                        true, user, friend, user, friend);
-                log.info("Дружба у пользователей id = {} и id = {} подтверждена", user, friend);
-            }
-            Optional<User> userBuf = getById(user);
-            if (userBuf.isPresent()) {
-                return userBuf.get();
-            } else {
-                throw new NotFoundException("Не найден пользователь!");
-            }
-        } catch (DataAccessException e) {
-            throw new NotFoundException("Не найден пользователь!");
+    public boolean addFriend(Integer user, Integer friend) {
+        String sqlGetFriends = "SELECT * FROM USER_FRIENDS WHERE user_id = ? AND friend_id = ?";
+        SqlRowSet user1Friends = jdbcTemplate.queryForRowSet(sqlGetFriends, user, friend);
+        SqlRowSet user2Friends = jdbcTemplate.queryForRowSet(sqlGetFriends, friend, user);
+        boolean friendship1 = false;
+        boolean friendship2 = false;
+        if (!user1Friends.next()) {
+            friendship1 = jdbcTemplate.update("INSERT INTO USER_FRIENDS (user_id, friend_id) VALUES (?, ?)",
+                    user, friend) > 0;
+            log.info("Пользователь id = {} добавил в друзья пользователя id = {}", user, friend);
         }
+        if (user2Friends.next()) {
+            friendship2 = jdbcTemplate.update("UPDATE USER_FRIENDS SET status = ? WHERE user_id IN (?, ?) AND friend_id IN (?, ?)",
+                    true, user, friend, user, friend) > 0;
+            log.info("Дружба у пользователей id = {} и id = {} подтверждена", user, friend);
+        }
+        return (friendship1 || friendship2);
     }
 
-    public Integer deleteFriend(Integer user, Integer friend) {
-        if (isExistById(user) && isExistById(friend)) {
-            try {
-                int updated = jdbcTemplate.update("DELETE FROM USER_FRIENDS WHERE user_id = ? AND friend_id = ?",
-                        user, friend);
-                if (updated > 0) {
-                    log.info("Пользователь id = {} удалил из друзей пользователя id = {}", user, friend);
-                    jdbcTemplate.update("UPDATE USER_FRIENDS SET status = ? WHERE user_id = ? AND friend_id = ?",
-                            false, friend, user);
-                    jdbcTemplate.update("INSERT INTO USER_EVENT_FEED (user_id, event_type, operation, entity_id, time_stamp) VALUES (?, ?, ?, ?, ?)",
-                            user, "FRIEND", "REMOVE", friend, Instant.now().toEpochMilli());
-                    log.info("Добавлено в историю удаление друга у пользователя id = {}", user);
-                }
-                return friend;
-            } catch (DataAccessException e) {
-                log.error("Ошибка при удалении из друзей");
-                return null;
-            }
-        } else {
-            throw new NotFoundException("Не найден пользователь!");
+    public boolean deleteFriend(Integer user, Integer friend) {
+        boolean bol = jdbcTemplate.update("DELETE FROM USER_FRIENDS WHERE user_id = ? AND friend_id = ?",
+                        user, friend) > 0;
+        if (bol) {
+            jdbcTemplate.update("UPDATE USER_FRIENDS SET status = ? WHERE user_id = ? AND friend_id = ?",
+                    false, friend, user);
         }
+        return (bol);
     }
 
     public boolean delete(Integer id) {
@@ -142,80 +112,25 @@ public class UserDbStorage implements UserStorage {
     }
 
     public List<User> getFriends(Integer userId) {
-        if (isExistById(userId)) {
-            try {
-                return jdbcTemplate.query(String.format("SELECT * FROM USER_FRIENDS AS ur " +
-                        "LEFT JOIN users AS u ON ur.friend_id = u.id WHERE ur.user_id = %s", userId), this::mapRowToUser);
-            } catch (DataAccessException e) {
-                log.error("Ошибка при получении списка друзей");
-                return null;
-            }
-        } else {
-            throw new NotFoundException("Не найден пользователь!");
-        }
+        return jdbcTemplate.query(String.format("SELECT * FROM USER_FRIENDS AS ur " +
+                "LEFT JOIN users AS u ON ur.friend_id = u.id WHERE ur.user_id = %s", userId), this::mapRowToUser);
     }
 
-    public List<Optional<Film>> getRecommendations(int id) {
+    public List<UserFeed> getFeedByUserId(Integer userId) {
+        return jdbcTemplate.query(String.format("SELECT * FROM USER_EVENT_FEED WHERE USER_ID = %s", userId),
+                this::mapRowToUserFeed);
+    }
+
+    public List<Integer> getUserLikes(Integer id) {
         SqlRowSet userLike = jdbcTemplate.queryForRowSet("select film_id from film_likes where user_id=?", id);
         List<Integer> currentFilmIdsUser = new ArrayList<>();
         while (userLike.next()) {
             currentFilmIdsUser.add(userLike.getInt("film_id"));
         }
-        if (currentFilmIdsUser.isEmpty()) {
-            List<Optional<Film>> recommendations = new ArrayList<>();
-            log.info(String.format("Для пользователя %d нет рекомендаций.", id));
-            return recommendations;
-        }
-
-        Optional<User> anotherUser = getUserWithMaxCommonLikes(id);
-        if (anotherUser == null) {
-            List<Optional<Film>> recommendations = new ArrayList<>();
-            log.info(String.format("Для пользователя %d нет рекомендаций.", id));
-            return recommendations;
-        }
-        SqlRowSet anotherUserLike = jdbcTemplate.queryForRowSet("select film_id from film_likes where user_id=?",
-                anotherUser.get().getId());
-
-        List<Integer> filmIdsAnotherUser = new ArrayList<>();
-        while (anotherUserLike.next()) {
-            filmIdsAnotherUser.add(anotherUserLike.getInt("film_id"));
-        }
-
-        List<Optional<Film>> films = new ArrayList<>();
-        for (Integer i : filmIdsAnotherUser) {
-            if (!currentFilmIdsUser.contains(i)) {
-                films.add(filmStorage.getById(i));
-            }
-        }
-        if (films.isEmpty()) {
-            Optional<User> newUser = getAnotherUserWithMaxCommonLikes(id);
-
-            if (newUser == null) {
-                List<Optional<Film>> recommendations = new ArrayList<>();
-                log.info(String.format("Для пользователя %d нет рекомендаций.", id));
-                return recommendations;
-            }
-            SqlRowSet newUserLikes = jdbcTemplate.queryForRowSet("select film_id from film_likes where user_id=?",
-                    newUser.get().getId());
-
-            List<Integer> filmIdsNewUser = new ArrayList<>();
-            while (newUserLikes.next()) {
-                filmIdsNewUser.add(newUserLikes.getInt("film_id"));
-            }
-
-            List<Optional<Film>> anotherListFilms = new ArrayList<>();
-            for (Integer i : filmIdsNewUser) {
-                if (!currentFilmIdsUser.contains(i)) {
-                    anotherListFilms.add(filmStorage.getById(i));
-                }
-            }
-            return anotherListFilms;
-        } else {
-            return films;
-        }
+        return currentFilmIdsUser;
     }
 
-    public Optional<User> getUserWithMaxCommonLikes(int userId) {
+    public List<Integer> getListUsersWithCommonLikes(int userId) {
         List<Integer> userIds = new ArrayList<>();
         String sql = "select user_id from film_likes where film_id IN " +
                 "\n(select film_id from film_likes where user_id=?)";
@@ -225,90 +140,7 @@ public class UserDbStorage implements UserStorage {
                 userIds.add(rs.getInt("user_id"));
             }
         }
-        if (userIds.isEmpty()) {
-            return null;
-        }
-        return getById(mostCommon(userIds));
-    }
-
-
-    public Optional<User> getAnotherUserWithMaxCommonLikes(int userId) {
-        List<Integer> userIds = new ArrayList<>();
-
-        String sql = "select user_id from film_likes where film_id IN " +
-                "\n(select film_id from film_likes where user_id=?)";
-
-        SqlRowSet rs = jdbcTemplate.queryForRowSet(sql, userId);
-        while (rs.next()) {
-            if (userId != rs.getInt("user_id")) {
-                userIds.add(rs.getInt("user_id"));
-            }
-        }
-        if (userIds.isEmpty()) {
-            return null;
-        }
-
-        Optional<User> newUser = getById(mostCommon(userIds));
-
-        SqlRowSet newUserLikesSql = jdbcTemplate.queryForRowSet("select film_id from FILM_LIKES where user_id=?",
-                newUser.get().getId());
-        List<Integer> newUserLikes = new ArrayList<>();
-        while (newUserLikesSql.next()) {
-            newUserLikes.add(newUserLikesSql.getInt("film_id"));
-        }
-        if (newUserLikes.isEmpty()) {
-            return null;
-        }
-
-        SqlRowSet currentUserLikesSql = jdbcTemplate.queryForRowSet("select film_id from film_likes where user_id=?", userId);
-        List<Integer> currentUserLikes = new ArrayList<>();
-
-        while (currentUserLikesSql.next()) {
-            currentUserLikes.add(currentUserLikesSql.getInt("film_id"));
-        }
-
-        List<Integer> newListUserIds = new ArrayList<>();
-        if (currentUserLikes.containsAll(newUserLikes)) {
-            for (Integer id : userIds) {
-                if (!id.equals(newUser.get().getId())) {
-                    newListUserIds.add(id);
-                }
-            }
-        }
-
-        if (newListUserIds.isEmpty()) {
-            return null;
-        }
-
-
-        return getById(mostCommon(newListUserIds));
-    }
-
-
-    public static <T> T mostCommon(List<T> list) {
-        Map<T, Integer> map = new HashMap<>();
-
-        for (T t : list) {
-            Integer val = map.get(t);
-            map.put(t, val == null ? 1 : val + 1);
-        }
-
-        Map.Entry<T, Integer> max = null;
-
-        for (Map.Entry<T, Integer> e : map.entrySet()) {
-            if (max == null || e.getValue() > max.getValue())
-                max = e;
-        }
-
-        return max.getKey();
-    }
-
-    public List<UserFeed> getFeedByUserId(Integer userId) {
-        if (!isExistById(userId)) {
-            throw new NotFoundException(String.format("Отзывов по id = %s не найдено!", userId));
-        }
-        return jdbcTemplate.query(String.format("SELECT * FROM USER_EVENT_FEED WHERE USER_ID = %s", userId),
-                this::mapRowToUserFeed);
+        return userIds;
     }
 
     private UserFeed mapRowToUserFeed(ResultSet resultSet, int rowNum) throws SQLException {
@@ -332,7 +164,7 @@ public class UserDbStorage implements UserStorage {
                 .build();
     }
 
-    private boolean isExistById(Integer id) {
+    public boolean isExistById(Integer id) {
         String sqlQuery = "SELECT EXISTS(SELECT 1 FROM USERS WHERE ID = ?)";
         return Boolean.TRUE.equals(jdbcTemplate.queryForObject(sqlQuery, Boolean.class, id));
     }

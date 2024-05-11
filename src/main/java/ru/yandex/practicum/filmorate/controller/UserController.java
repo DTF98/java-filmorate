@@ -1,7 +1,7 @@
 package ru.yandex.practicum.filmorate.controller;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.User;
@@ -9,76 +9,78 @@ import ru.yandex.practicum.filmorate.service.UserService;
 
 import javax.validation.Valid;
 
-import static ru.yandex.practicum.filmorate.util.ResponseUtil.respondSuccess;
-import static ru.yandex.practicum.filmorate.util.ResponseUtil.respondSuccessList;
-
 @RestController
+@RequestMapping(path ="users")
 @Slf4j
+@RequiredArgsConstructor
 public class UserController {
     private final UserService service;
 
-    @Autowired
-    public UserController(UserService service) {
-        this.service = service;
-    }
-
-    @GetMapping("/users")
+    @GetMapping
     public ResponseEntity<?> findAll() {
-        return respondSuccessList(service.get());
+        return ResponseEntity.ok(service.get());
     }
 
-    @GetMapping("/users/{id}")
+    @GetMapping("/{id}")
     public ResponseEntity<User> getById(@PathVariable int id) {
-        log.info("Получить пользователя по ID - {}", id);
-
-        return respondSuccess(service.getUserById(id));
+        log.info("Получить пользователя по id = {}", id);
+        return ResponseEntity.ok(service.getUserById(id));
     }
 
-    @GetMapping("/users/{id}/friends")
+    @GetMapping("/{id}/friends")
     public ResponseEntity<?> getFriends(@PathVariable("id") Integer id) {
-        return respondSuccessList(service.getFriends(id));
+        log.info("Получить список друзей пользователя по id = {}", id);
+        return ResponseEntity.ok(service.getFriends(id));
     }
 
-    @GetMapping("/users/{id}/friends/common/{otherId}")
+    @GetMapping("/{id}/friends/common/{otherId}")
     public ResponseEntity<?> getListOfMutualFriends(@PathVariable("id") Integer id,
                                                     @PathVariable("otherId") Integer otherId) {
-        return respondSuccessList(service.searchForCommonFriends(id, otherId));
+        log.info("Получить список общих друзей пользователя по id = {}, с пользователем по id = {}", id, otherId);
+        return ResponseEntity.ok(service.searchForCommonFriends(id, otherId));
     }
 
-    @DeleteMapping("/users/{id}/friends/{friendId}")
+    @DeleteMapping("/{id}/friends/{friendId}")
     public ResponseEntity<?> deleteFriend(@PathVariable("id") Integer id,
                                           @PathVariable("friendId") Integer friendId) {
-        return respondSuccess(service.deleteFriend(id, friendId));
+        log.info("Удалить из друзей пользователя по id = {}, пользователя по id = {}", id, friendId);
+        return ResponseEntity.ok(service.deleteFriend(id, friendId));
     }
 
-    @PostMapping(value = "/users")
+    @PostMapping
     public ResponseEntity<?> create(@Valid @RequestBody User user) {
-        return respondSuccess(service.add(user));
+        log.info("Создать нового пользователя {}", user);
+        return ResponseEntity.ok(service.add(user));
     }
 
-    @PutMapping(value = "/users")
+    @PutMapping
     public ResponseEntity<?> update(@Valid @RequestBody User user) {
-        return respondSuccess(service.update(user));
+        log.info("Обновить пользователя по id = {}", user.getId());
+        return ResponseEntity.ok(service.update(user));
     }
 
-    @PutMapping("/users/{id}/friends/{friendId}")
+    @PutMapping("/{id}/friends/{friendId}")
     public ResponseEntity<?> addFriend(@PathVariable("id") Integer id,
                                        @PathVariable("friendId") Integer friendId) {
-        return respondSuccess(service.addToFriends(id, friendId));
+        log.info("Добавить пользователя по id = {} в друзья к пользователю по id = {}",id, friendId);
+        return ResponseEntity.ok(service.addToFriends(id, friendId));
     }
 
-    @DeleteMapping("/users/{id}")
+    @DeleteMapping("/{id}")
     public ResponseEntity<?> delete(@PathVariable Integer id) {
-        return respondSuccess(service.delete(id));
+        log.info("Удалить пользователя по id = {}", id);
+        return ResponseEntity.ok(service.delete(id));
     }
 
-    @GetMapping("/users/{id}/feed")
+    @GetMapping("/{id}/feed")
     public ResponseEntity<?> getFeedByUser(@PathVariable Integer id) {
-        return respondSuccess(service.getFeed(id));
+        log.info("Получить историю событий пользователя по id = {}", id);
+        return ResponseEntity.ok(service.getFeed(id));
     }
 
-    @GetMapping("/users/{id}/recommendations")
+    @GetMapping("/{id}/recommendations")
     public ResponseEntity<?> getRecommendations(@PathVariable("id") Integer id) {
-        return respondSuccessList(service.getRecommendations(id));
+        log.info("Получить список рекомендаций для пользователя по id = {}", id);
+        return ResponseEntity.ok(service.getRecommendations(id));
     }
 }

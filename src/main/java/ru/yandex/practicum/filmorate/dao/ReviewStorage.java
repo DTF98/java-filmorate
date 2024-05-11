@@ -11,7 +11,7 @@ public interface ReviewStorage {
 
     Review update(Review review);
 
-    int delete(int id);
+    void delete(int id);
 
     void increaseUseful(int reviewId);
 
@@ -23,4 +23,5 @@ public interface ReviewStorage {
 
     Collection<Review> getByFilmId(int filmId);
 
+    boolean isExistReviewById(Integer id);
 }

@@ -10,9 +10,6 @@ import ru.yandex.practicum.filmorate.service.ReviewService;
 import javax.validation.Valid;
 import java.util.Collection;
 
-import static ru.yandex.practicum.filmorate.util.ResponseUtil.respondSuccess;
-import static ru.yandex.practicum.filmorate.util.ResponseUtil.respondSuccessList;
-
 @Slf4j
 @RestController
 @RequiredArgsConstructor
@@ -23,13 +20,13 @@ public class ReviewController {
     @PostMapping()
     public ResponseEntity<Review> add(@Valid @RequestBody Review review) {
         log.info("Добавление отзыва к фильму");
-        return respondSuccess(reviewService.add(review));
+        return ResponseEntity.ok(reviewService.add(review));
     }
 
     @PutMapping()
     public ResponseEntity<Review> update(@Valid @RequestBody Review review) {
         log.info("Обновление отзыва к фильму");
-        return respondSuccess(reviewService.update(review));
+        return ResponseEntity.ok(reviewService.update(review));
     }
 
     /**
@@ -39,45 +36,45 @@ public class ReviewController {
     public ResponseEntity<Collection<Review>> getAll(@RequestParam(defaultValue = "0") Integer filmId,
                                                      @RequestParam(defaultValue = "10", required = false) Integer count) {
         log.info("Получение всех отзывов по идентификатору фильма");
-        return respondSuccessList(reviewService.getAll(filmId, count));
+        return ResponseEntity.ok(reviewService.getAll(filmId, count));
     }
 
     @PutMapping("/{id}/like/{userId}")
     public ResponseEntity<Integer> addLike(@PathVariable int id, @PathVariable int userId) {
         log.info("Пользователь {} ставит like отзыву {}", userId, id);
-        return respondSuccess(reviewService.addLike(id, userId));
+        return ResponseEntity.ok(reviewService.addLike(id, userId));
     }
 
     @PutMapping("/{id}/dislike/{userId}")
     public ResponseEntity<Integer> addDislike(@PathVariable int id, @PathVariable int userId) {
         log.info("Пользователь {} ставит dislike отзыву {}", userId, id);
-        return respondSuccess(reviewService.addDislike(id, userId));
+        return ResponseEntity.ok(reviewService.addDislike(id, userId));
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<Review> getById(@PathVariable int id) {
         log.info("Получить отзыв по ID фильма - {}", id);
-        return respondSuccess(reviewService.getById(id));
+        return ResponseEntity.ok(reviewService.getById(id));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Integer> delete(@PathVariable int id) {
         log.info("Удаление отзыва к фильму {}", id);
-        return respondSuccess(reviewService.delete(id));
+        return ResponseEntity.ok(reviewService.delete(id));
     }
 
     @DeleteMapping("/{id}/like/{userId}")
     public ResponseEntity<Boolean> deleteLike(@PathVariable int id,
                                               @PathVariable int userId) {
         log.info("Удаление лайка к отзыву {}", id);
-        return respondSuccess(reviewService.deleteReviewLike(id, userId));
+        return ResponseEntity.ok(reviewService.deleteReviewLike(id, userId));
     }
 
     @DeleteMapping("/{id}/dislike/{userId}")
     public ResponseEntity<Boolean> deleteDislike(@PathVariable int id,
                                                  @PathVariable int userId) {
         log.info("Удаление дизлайка к отзыву {}", id);
-        return respondSuccess(reviewService.deleteReviewDislike(id, userId));
+        return ResponseEntity.ok(reviewService.deleteReviewDislike(id, userId));
     }
 
 }

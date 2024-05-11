@@ -7,10 +7,10 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.service.GenreService;
 
-import static ru.yandex.practicum.filmorate.util.ResponseUtil.respondSuccess;
-import static ru.yandex.practicum.filmorate.util.ResponseUtil.respondSuccessList;
+import java.util.Collection;
 
 @RestController
 @RequestMapping(path = "genres")
@@ -20,14 +20,14 @@ public class GenreController {
     private final GenreService genreService;
 
     @GetMapping
-    public ResponseEntity<?> get() {
+    public ResponseEntity<Collection<Genre>> get() {
         log.info("Получение всех жанров");
-        return respondSuccessList(genreService.get());
+        return ResponseEntity.ok(genreService.get());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getByID(@PathVariable Integer id) {
+    public ResponseEntity<Genre> getByID(@PathVariable Integer id) {
         log.info("Получение жанра id={}", id);
-        return respondSuccess(genreService.getByID(id));
+        return ResponseEntity.ok(genreService.getByID(id));
     }
 }
