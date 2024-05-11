@@ -42,7 +42,7 @@ public class DirectorController {
     }
 
     @GetMapping
-    public ResponseEntity<Collection<Director>> get() {
+    public ResponseEntity<Collection<Director>> getAll() {
         log.info("Получить список режисеров");
         return ResponseEntity.ok(service.get());
     }
