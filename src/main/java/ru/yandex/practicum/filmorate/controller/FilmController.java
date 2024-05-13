@@ -19,7 +19,7 @@ public class FilmController {
     private final FilmService service;
 
     @GetMapping
-    public ResponseEntity<Collection<Film>> get() {
+    public ResponseEntity<Collection<Film>> getAll() {
         log.info("Получить список всех фильмов");
         return ResponseEntity.ok(service.getAll());
     }
