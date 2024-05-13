@@ -152,8 +152,7 @@ public class FilmService {
             }
             log.info("Получен список фильмов режиссера id = {} отсортированных по году", id);
             return years;
-        }
-        else {
+        } else {
             throw new ValidationException("Переданы не верные параметры запроса");
         }
     }
