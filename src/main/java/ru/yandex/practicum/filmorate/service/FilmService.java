@@ -153,7 +153,9 @@ public class FilmService {
             log.info("Получен список фильмов режиссера id = {} отсортированных по году", id);
             return years;
         }
-        else throw new ValidationException("Переданы не верные параметры запроса");
+        else {
+            throw new ValidationException("Переданы не верные параметры запроса");
+        }
     }
 
     public List<Film> getCommonFilms(Integer userId, Integer friendId) {
