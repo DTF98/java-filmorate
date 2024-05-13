@@ -11,5 +11,4 @@ public interface ReviewLikeStorage {
     boolean deleteLike(Integer reviewId, int userId);
 
     boolean deleteDislike(Integer reviewId, int userId);
-
 }

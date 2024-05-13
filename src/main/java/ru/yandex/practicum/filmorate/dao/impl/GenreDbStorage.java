@@ -16,8 +16,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-import static ru.yandex.practicum.filmorate.constant.ConstantError.ERROR_ENTITY_GENRE;
-
 @Component
 @Slf4j
 @AllArgsConstructor
@@ -27,17 +25,14 @@ public class GenreDbStorage implements GenreStorage {
     public Genre add(Genre genre) {
         String sql = "insert into genres (name) values (?)";
         KeyHolder keyHolder = new GeneratedKeyHolder();
-        if (jdbcTemplate.update(connection -> {
+        jdbcTemplate.update(connection -> {
             PreparedStatement stmt = connection.prepareStatement(sql, new String[]{"genre_id"});
             stmt.setString(1, genre.getName());
             return stmt;
-        }, keyHolder) > 0) {
-            Integer directorID = Objects.requireNonNull(keyHolder.getKey()).intValue();
-            genre.setId(directorID);
-            return genre;
-        } else {
-            return ERROR_ENTITY_GENRE;
-        }
+        }, keyHolder);
+        Integer directorID = Objects.requireNonNull(keyHolder.getKey()).intValue();
+        genre.setId(directorID);
+        return genre;
     }
 
     public Optional<Genre> getById(Integer id) {
@@ -52,17 +47,14 @@ public class GenreDbStorage implements GenreStorage {
 
     public Genre update(Genre genre) {
         String sql = "UPDATE genres SET name = ? WHERE id = ?;";
-        if (jdbcTemplate.update(sql, genre.getName(), genre.getId()) > 0) {
-            log.info("Обновлен жанр id = {}", genre.getId());
-            return genre;
-        } else {
-            return ERROR_ENTITY_GENRE;
-        }
+        jdbcTemplate.update(sql, genre.getName(), genre.getId());
+        log.info("Обновлен жанр id = {}", genre.getId());
+        return genre;
     }
 
-    public boolean delete(Integer id) {
+    public void delete(Integer id) {
         String sql = "DELETE FROM genres WHERE genre_id = ?;";
-        return jdbcTemplate.update(sql, id) > 0;
+        jdbcTemplate.update(sql, id);
     }
 
     private Genre mapRowToGenre(ResultSet resultSet, int rowNum) throws SQLException {

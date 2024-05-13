@@ -6,9 +6,9 @@ import java.util.List;
 import java.util.Map;
 
 public interface FilmStorage extends Storage<Film> {
-    boolean addLike(Integer filmID, Integer userID);
+    void addLike(Integer filmID, Integer userID);
 
-    boolean deleteLike(Integer filmID, Integer userID);
+    void deleteLike(Integer filmID, Integer userID);
 
     List<Film> getMostPopularFilms(Integer count);
 

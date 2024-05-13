@@ -16,8 +16,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-import static ru.yandex.practicum.filmorate.constant.ConstantError.ERROR_ENTITY_MPA;
-
 @Component
 @Slf4j
 @AllArgsConstructor
@@ -27,17 +25,14 @@ public class MPADbStorage implements MPAStorage {
     public MPA add(MPA mpa) {
         String sql = "insert into mpa (name) values (?)";
         KeyHolder keyHolder = new GeneratedKeyHolder();
-        if (jdbcTemplate.update(connection -> {
+        jdbcTemplate.update(connection -> {
             PreparedStatement stmt = connection.prepareStatement(sql, new String[]{"mpa_id"});
             stmt.setString(1, mpa.getName());
             return stmt;
-        }, keyHolder) > 0) {
-            Integer directorID = Objects.requireNonNull(keyHolder.getKey()).intValue();
-            mpa.setId(directorID);
-            return mpa;
-        } else {
-            return ERROR_ENTITY_MPA;
-        }
+        }, keyHolder);
+        Integer directorID = Objects.requireNonNull(keyHolder.getKey()).intValue();
+        mpa.setId(directorID);
+        return mpa;
     }
 
     public Optional<MPA> getById(Integer id) {
@@ -52,17 +47,14 @@ public class MPADbStorage implements MPAStorage {
 
     public MPA update(MPA mpa) {
         String sql = "UPDATE mpa SET name = ? WHERE id = ?;";
-        if (jdbcTemplate.update(sql, mpa.getName(), mpa.getId()) > 0) {
-            log.info("Обновили рейтинг по id = {}", mpa.getId());
-            return mpa;
-        } else {
-            return ERROR_ENTITY_MPA;
-        }
+        jdbcTemplate.update(sql, mpa.getName(), mpa.getId());
+        log.info("Обновили рейтинг по id = {}", mpa.getId());
+        return mpa;
     }
 
-    public boolean delete(Integer id) {
+    public void delete(Integer id) {
         String sql = "DELETE FROM mpa WHERE mpa_id = ?;";
-        return jdbcTemplate.update(sql, id) > 0;
+        jdbcTemplate.update(sql, id);
     }
 
     private MPA mapRowToMPA(ResultSet resultSet, int rowNum) throws SQLException {

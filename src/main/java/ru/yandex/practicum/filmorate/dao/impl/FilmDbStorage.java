@@ -22,8 +22,6 @@ import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static ru.yandex.practicum.filmorate.constant.ConstantError.ERROR_ENTITY_FILM;
-
 @Component
 @Slf4j
 @AllArgsConstructor
@@ -143,38 +141,32 @@ public class FilmDbStorage implements FilmStorage {
         String sqlFilm = "insert into films (name, description, release_date, duration) " +
                 "values (?, ?, ?, ?);";
         KeyHolder keyHolder = new GeneratedKeyHolder();
-        if (jdbcTemplate.update(connection -> {
+        jdbcTemplate.update(connection -> {
             PreparedStatement stmt = connection.prepareStatement(sqlFilm, new String[]{"id"});
             stmt.setString(1, film.getName());
             stmt.setString(2, film.getDescription());
             stmt.setDate(3, Date.valueOf(film.getReleaseDate()));
             stmt.setInt(4, film.getDuration());
             return stmt;
-        }, keyHolder) > 0) {
-            Integer filmID = Objects.requireNonNull(keyHolder.getKey()).intValue();
-            film.setId(filmID);
-            updateFilmGenresLinks(film);
-            updateFilmMPALinks(film);
-            updateFilmDirectorsLinks(film);
-            log.info("Добавлен фильм по id = {}", filmID);
-            return film;
-        } else {
-            return ERROR_ENTITY_FILM;
-        }
+        }, keyHolder);
+        Integer filmID = Objects.requireNonNull(keyHolder.getKey()).intValue();
+        film.setId(filmID);
+        updateFilmGenresLinks(film);
+        updateFilmMPALinks(film);
+        updateFilmDirectorsLinks(film);
+        log.info("Добавлен фильм по id = {}", filmID);
+        return film;
     }
 
     public Film update(Film film) {
         String sqlFilms = "UPDATE films SET name = ?, description = ?, release_Date = ?, " +
                 "duration = ? WHERE id = ?;";
-        if (jdbcTemplate.update(sqlFilms, film.getName(), film.getDescription(), film.getReleaseDate(),
-                film.getDuration(), film.getId()) > 0) {
-            Film sortedByGenre = updateFilmGenresLinks(film);
-            updateFilmMPALinks(sortedByGenre);
-            log.info("Обновлен фильм по id = {}", film.getId());
-            return updateFilmDirectorsLinks(sortedByGenre);
-        } else {
-            return ERROR_ENTITY_FILM;
-        }
+        jdbcTemplate.update(sqlFilms, film.getName(), film.getDescription(), film.getReleaseDate(),
+                film.getDuration(), film.getId());
+        Film sortedByGenre = updateFilmGenresLinks(film);
+        updateFilmMPALinks(sortedByGenre);
+        log.info("Обновлен фильм по id = {}", film.getId());
+        return updateFilmDirectorsLinks(sortedByGenre);
     }
 
     public List<Film> getMostPopularFilmsByGenreId(Integer count, Integer genreId) {
@@ -228,19 +220,19 @@ public class FilmDbStorage implements FilmStorage {
                 this::mapRowToFilm);
     }
 
-    public boolean addLike(Integer filmID, Integer userID) {
+    public void addLike(Integer filmID, Integer userID) {
         String sqlLike = "MERGE INTO film_likes KEY(user_id, film_id) VALUES (?,?)";
-        return jdbcTemplate.update(sqlLike, userID, filmID) > 0;
+        jdbcTemplate.update(sqlLike, userID, filmID);
     }
 
-    public boolean deleteLike(Integer filmID, Integer userID) {
+    public void deleteLike(Integer filmID, Integer userID) {
         String sqlFL = "delete from film_likes where film_id = ? and user_id = ?";
-        return jdbcTemplate.update(sqlFL, filmID, userID) > 0;
+        jdbcTemplate.update(sqlFL, filmID, userID);
     }
 
-    public boolean delete(Integer id) {
+    public void delete(Integer id) {
         String sqlQuery = "DELETE FROM films WHERE ID= ?";
-        return jdbcTemplate.update(sqlQuery, id) > 0;
+        jdbcTemplate.update(sqlQuery, id);
     }
 
     private Film updateFilmGenresLinks(Film film) {

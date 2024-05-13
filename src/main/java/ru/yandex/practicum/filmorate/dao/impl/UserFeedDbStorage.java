@@ -18,11 +18,11 @@ import java.util.List;
 public class UserFeedDbStorage implements UserFeedStorage {
     private final JdbcTemplate jdbcTemplate;
 
-    public boolean addInHistory(Integer userId, String eventType, String operation, Integer entityId) {
+    public void addInHistory(Integer userId, String eventType, String operation, Integer entityId) {
         String sql = "INSERT INTO USER_EVENT_FEED (user_id, event_type, operation, entity_id, time_stamp) " +
                 "VALUES (?, ?, ?, ?, ?)";
-        return jdbcTemplate.update(sql, userId, eventType, operation, entityId,
-                Instant.now().toEpochMilli()) > 0;
+        jdbcTemplate.update(sql, userId, eventType, operation, entityId,
+                Instant.now().toEpochMilli());
     }
 
     public List<UserFeed> getFeedByUserId(Integer userId) {

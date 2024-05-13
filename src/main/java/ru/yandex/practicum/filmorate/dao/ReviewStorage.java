@@ -22,6 +22,4 @@ public interface ReviewStorage {
     Optional<Review> getById(int id);
 
     Collection<Review> getByFilmId(int filmId);
-
-    boolean isExistReviewById(Integer id);
 }
