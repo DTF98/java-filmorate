@@ -58,7 +58,7 @@ public class ReviewController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Integer> delete(@PathVariable int id) {
+    public ResponseEntity<Review> delete(@PathVariable int id) {
         log.info("Удаление отзыва к фильму {}", id);
         return ResponseEntity.ok(reviewService.delete(id));
     }

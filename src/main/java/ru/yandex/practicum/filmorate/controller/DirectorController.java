@@ -30,9 +30,9 @@ public class DirectorController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Boolean> deleteById(@PathVariable Integer id) {
+    public ResponseEntity<Director> deleteById(@PathVariable Integer id) {
         log.info("Получить режисера по id = {}", id);
-        return ResponseEntity.ok(service.deleteById(id));
+        return ResponseEntity.ok(service.delete(id));
     }
 
     @PostMapping

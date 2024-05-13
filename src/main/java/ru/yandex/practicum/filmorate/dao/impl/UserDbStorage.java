@@ -19,8 +19,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-import static ru.yandex.practicum.filmorate.constant.ConstantError.ERROR_ENTITY_USER;
-
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -34,31 +32,25 @@ public class UserDbStorage implements UserStorage {
     public User update(User item) {
         String sqlFilms = "UPDATE users SET email = ?, login = ?, name = ?, " +
                 "birthday = ? WHERE id = ?;";
-        if (jdbcTemplate.update(sqlFilms, item.getEmail(), item.getLogin(), item.getName(),
-                item.getBirthday(), item.getId()) > 0) {
-            return item;
-        } else {
-            return ERROR_ENTITY_USER;
-        }
+        jdbcTemplate.update(sqlFilms, item.getEmail(), item.getLogin(), item.getName(),
+                item.getBirthday(), item.getId());
+        return item;
     }
 
     public User add(User user) {
         String sql = "insert into users (email, login, name, birthday) values (?, ?, ?, ?)";
         KeyHolder keyHolder = new GeneratedKeyHolder();
-        if (jdbcTemplate.update(connection -> {
+        jdbcTemplate.update(connection -> {
             PreparedStatement stmt = connection.prepareStatement(sql, new String[]{"id"});
             stmt.setString(1, user.getEmail());
             stmt.setString(2, user.getLogin());
             stmt.setString(3, user.getName());
             stmt.setString(4, String.valueOf(user.getBirthday()));
             return stmt;
-        }, keyHolder) > 0) {
-            Integer userId = Objects.requireNonNull(keyHolder.getKey()).intValue();
-            user.setId(userId);
-            return user;
-        } else {
-            return ERROR_ENTITY_USER;
-        }
+        }, keyHolder);
+        Integer userId = Objects.requireNonNull(keyHolder.getKey()).intValue();
+        user.setId(userId);
+        return user;
     }
 
     public Optional<User> getById(Integer id) {
@@ -66,40 +58,36 @@ public class UserDbStorage implements UserStorage {
                 this::mapRowToUser, id));
     }
 
-    public boolean addFriend(Integer user, Integer friend) {
+    public void addFriend(Integer user, Integer friend) {
         String sqlGetFriends = "SELECT * FROM USER_FRIENDS WHERE user_id = ? AND friend_id = ?";
         SqlRowSet user1Friends = jdbcTemplate.queryForRowSet(sqlGetFriends, user, friend);
         SqlRowSet user2Friends = jdbcTemplate.queryForRowSet(sqlGetFriends, friend, user);
-        boolean friendship1 = false;
-        boolean friendship2 = false;
         if (!user1Friends.next()) {
-            friendship1 = jdbcTemplate.update("INSERT INTO USER_FRIENDS (user_id, friend_id) VALUES (?, ?)",
-                    user, friend) > 0;
+            jdbcTemplate.update("INSERT INTO USER_FRIENDS (user_id, friend_id) VALUES (?, ?)",
+                    user, friend);
             log.info("Пользователь id = {} добавил в друзья пользователя id = {}", user, friend);
         }
         if (user2Friends.next()) {
-            friendship2 = jdbcTemplate.update("UPDATE USER_FRIENDS SET status = ? WHERE user_id IN (?, ?) AND friend_id IN (?, ?)",
-                    true, user, friend, user, friend) > 0;
+            jdbcTemplate.update("UPDATE USER_FRIENDS SET status = ? WHERE user_id IN (?, ?) AND friend_id IN (?, ?)",
+                    true, user, friend, user, friend);
             log.info("Дружба у пользователей id = {} и id = {} подтверждена", user, friend);
         }
-        return (friendship1 || friendship2);
     }
 
-    public boolean deleteFriend(Integer user, Integer friend) {
+    public void deleteFriend(Integer user, Integer friend) {
         boolean bol = jdbcTemplate.update("DELETE FROM USER_FRIENDS WHERE user_id = ? AND friend_id = ?",
                         user, friend) > 0;
         if (bol) {
             jdbcTemplate.update("UPDATE USER_FRIENDS SET status = ? WHERE user_id = ? AND friend_id = ?",
                     false, friend, user);
         }
-        return (bol);
     }
 
-    public boolean delete(Integer id) {
+    public void delete(Integer id) {
         deleteFriendsLinks(id);
         deleteLikesLinks(id);
         String sqlQuery = "DELETE FROM users WHERE ID= ?";
-        return jdbcTemplate.update(sqlQuery, id) > 0;
+        jdbcTemplate.update(sqlQuery, id);
     }
 
     public void deleteFriendsLinks(Integer userId) {
@@ -145,10 +133,5 @@ public class UserDbStorage implements UserStorage {
                 .name(resultSet.getString("name"))
                 .birthday(LocalDate.parse(resultSet.getString("birthday")))
                 .build();
-    }
-
-    public boolean isExistById(Integer id) {
-        String sqlQuery = "SELECT EXISTS(SELECT 1 FROM USERS WHERE ID = ?)";
-        return Boolean.TRUE.equals(jdbcTemplate.queryForObject(sqlQuery, Boolean.class, id));
     }
 }

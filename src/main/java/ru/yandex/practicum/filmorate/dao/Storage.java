@@ -12,5 +12,5 @@ public interface Storage<T> {
 
     T update(T item);
 
-    boolean delete(Integer id);
+    void delete(Integer id);
 }

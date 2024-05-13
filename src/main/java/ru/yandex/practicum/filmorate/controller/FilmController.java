@@ -43,7 +43,7 @@ public class FilmController {
     }
 
     @DeleteMapping("/{filmId}")
-    public ResponseEntity<Boolean> deleteById(@PathVariable("filmId") Integer id) {
+    public ResponseEntity<Film> deleteById(@PathVariable("filmId") Integer id) {
         log.info("Удалить фильм по id = {}", id);
         return ResponseEntity.ok(service.delete(id));
     }
