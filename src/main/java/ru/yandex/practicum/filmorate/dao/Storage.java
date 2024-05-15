@@ -11,4 +11,6 @@ public interface Storage<T> {
     List<T> get();
 
     T update(T item);
+
+    void delete(Integer id);
 }

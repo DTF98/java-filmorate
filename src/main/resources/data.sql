@@ -14,3 +14,4 @@ select 4, 'Триллер' union
 select 5, 'Документальный' union
 select 6, 'Боевик'
 ) where not exists(select * from GENRES);
+
